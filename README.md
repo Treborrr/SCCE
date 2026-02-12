@@ -1,3 +1,5 @@
+---
+
 # 📘 CICLO DEFINITIVO DEL LOTE
 
 ## Sistema de Trazabilidad de Producción de Cacao
@@ -13,11 +15,11 @@ Representa el nacimiento formal del lote dentro del sistema.
 Un lote puede representar:
 
 * Una compra individual
-* La unión de dos compras consolidadas en un solo lote físico
+* La consolidación física de dos compras en un solo lote
 
 ---
 
-## 📌 Datos que se registran
+## 📌 Datos registrados
 
 * Código secuencial único
 * Fecha de compra
@@ -33,8 +35,8 @@ Un lote puede representar:
 INGRESADO
 ```
 
-Aquí comienza la trazabilidad histórica.
-El lote aún no entra en proceso productivo.
+Aquí inicia la trazabilidad histórica.
+No existe proceso productivo activo.
 
 ---
 
@@ -54,9 +56,9 @@ FERMENTACION
 
 ## 📌 Modelo por EVENTOS
 
-La fermentación no es un formulario único.
-Es una secuencia de eventos independientes.
+La fermentación se modela como una secuencia de eventos independientes.
 
+No es un único formulario.
 Cada acción genera un registro.
 
 ---
@@ -68,9 +70,13 @@ Cada acción genera un registro.
 * Control
 * Final
 
-🔴 Importante:
-Una remoción **ya no puede** ser el evento final.
-El cierre de fermentación solo ocurre con un evento tipo `FINAL`.
+🔴 Regla crítica:
+Una remoción **no puede** cerrar la fermentación.
+El cierre solo ocurre con un evento tipo:
+
+```
+FINAL
+```
 
 ---
 
@@ -89,30 +95,38 @@ El cierre de fermentación solo ocurre con un evento tipo `FINAL`.
 
 ---
 
-## 🔹 Si hay prueba de corte
+## 🔹 Prueba de corte (en fermentación)
+
+Si se marca:
 
 Debe permitir:
 
-* 📷 Foto (opcional y editable posteriormente)
-* 📝 Descripción (opcional y editable posteriormente)
+* 📷 Adjuntar foto (opcional, editable posteriormente)
+* 📝 Descripción (opcional, editable posteriormente)
 
-No es obligatoria en el momento del registro.
+No es obligatoria al momento del registro.
 
 ---
 
 ## 🔹 Finalización de fermentación
 
-Solo ocurre cuando se registra un evento tipo:
+Cuando se registra evento tipo:
 
 ```
 FINAL
 ```
 
-Cuando eso ocurre:
+Ocurre automáticamente:
 
-* La fermentación termina
-* El lote entra inmediatamente a secado
-* Se elimina el estado “LISTO_PARA_SECADO”
+* Fin de fermentación
+* Inicio inmediato de secado
+* Eliminación del estado “LISTO_PARA_SECADO”
+
+Transición directa:
+
+```
+FERMENTACION → SECADO
+```
 
 ---
 
@@ -120,30 +134,30 @@ Cuando eso ocurre:
 
 ## 🎯 Proceso pasivo dependiente del clima
 
-Cuando termina fermentación:
-
-Estado cambia automáticamente a:
+Estado:
 
 ```
 SECADO
 ```
 
-No existe un estado intermedio.
+No existe estado intermedio.
 
 ---
 
-## 📌 Inicio de secado
+## 📌 Inicio de secado (automático)
 
-* Fecha inicio = fecha fin de fermentación (automática)
-* Hora inicio = hora del evento final
+* Fecha inicio = fecha del evento FINAL de fermentación
+* Hora inicio = hora del evento FINAL
 
 ---
 
 ## 📌 Durante secado
 
-* No existen eventos técnicos del lote
-* No se registran remociones
-* No se registran parámetros internos
+No se registran:
+
+* Eventos técnicos
+* Remociones
+* Parámetros internos
 
 Es un proceso pasivo.
 
@@ -151,52 +165,46 @@ Es un proceso pasivo.
 
 ## 🌡 Temperatura ambiente
 
-Se gestiona en sistema independiente.
+Se registra en sistema independiente.
 
-Puede:
+Características:
 
-* Registrarse manualmente
-* Conectarse a sensor en el futuro
-
-No está vinculada obligatoriamente al lote.
-Solo se consulta para análisis histórico.
+* Registro manual
+* Futuro soporte sensor
+* No vinculación obligatoria con lote
+* Consulta histórica por rango de fechas
 
 ---
 
 ## 📌 Finalización de secado
 
-Se registra:
+Se registra manualmente:
 
 * Fecha fin
 * Hora fin
+* % de secado
 
 Cuando termina:
 
-Estado cambia a:
-
 ```
-LISTO_PARA_ALMACEN
+SECADO → LISTO_PARA_ALMACEN
 ```
-
-No entra automáticamente a almacén.
 
 ---
 
 # 🟫 4️⃣ ALMACÉN
 
-Cuando el lote físicamente entra a almacén:
-
-Estado cambia a:
+Cuando el lote entra físicamente a almacén:
 
 ```
-ALMACEN
+LISTO_PARA_ALMACEN → ALMACEN
 ```
 
 Aquí nace el inventario real.
 
 ---
 
-## 📌 Datos que se registran
+## 📌 Datos registrados
 
 * Fecha
 * Hora
@@ -227,25 +235,20 @@ El lote ahora tiene:
 
 ---
 
-# 🟫 5️⃣ MUESTRAS (Nueva Entidad Central de Calidad)
+# 🟫 5️⃣ MUESTRAS
 
-🔴 Cambio importante en tu modelo:
+## 🎯 Nueva entidad central de calidad
 
-Ahora la muestra es la entidad que descuenta stock.
+Una muestra representa una extracción física real del lote.
 
 ---
 
-## 🎯 Propósito
+## 📌 Características
 
-Representa una extracción física de cacao desde el lote.
-
-Un lote puede tener múltiples muestras.
-
-Cada muestra:
-
-* Tiene un peso específico
-* Descuenta del stock
-* Es la base para análisis y cata
+* Un lote puede tener múltiples muestras
+* Cada muestra tiene peso específico
+* La muestra descuenta stock
+* La muestra es base para análisis físico y cata
 
 ---
 
@@ -262,17 +265,17 @@ Al guardarse:
 stockActual -= pesoMuestra / 1000
 ```
 
-Solo se descuenta al crear la muestra.
+🔴 Importante:
+
+* El kgNeto original no cambia
+* Solo se modifica stockActual
+* El descuento ocurre solo una vez (al crear la muestra)
 
 ---
 
 # 🟫 6️⃣ ANÁLISIS FÍSICO
 
-## 🎯 Dependencia
-
-Un análisis físico pertenece a una muestra.
-
-Relación:
+## 🎯 Dependencia estructural
 
 ```
 Lote
@@ -280,18 +283,53 @@ Lote
       → Análisis físicos
 ```
 
+Puede haber múltiples análisis físicos por muestra.
+
 ---
 
 ## 📌 Datos del análisis físico
 
 * Fecha
-* Humedad
-* Defectos físicos (estructura flexible)
-* Prueba de corte (si aplica)
+* Humedad (%)
+* Defectos físicos (detalle flexible con gramos y %)
+* Prueba de corte (detalle por granos)
+* % de fermentación
 * Foto
 * Descripción
 
-No descuenta stock (eso ya lo hizo la muestra).
+---
+
+## 🔹 Defectos físicos
+
+Ejemplo:
+
+| Tipo            | Gramos | %  |
+| --------------- | ------ | -- |
+| Planos          | X      | X% |
+| Materia extraña | X      | X% |
+| Granos <1g      | X      | X% |
+| Pasillas        | X      | X% |
+| Múltiples       | X      | X% |
+| Germinados      | X      | X% |
+
+---
+
+## 🔹 Prueba de corte (análisis físico)
+
+Incluye:
+
+* Cantidad de granos evaluados
+* Clasificación por tipo
+* % fermentación calculado
+
+---
+
+## 📌 Regla importante
+
+El análisis físico:
+
+* NO descuenta stock
+* El descuento ya ocurrió al crear la muestra
 
 ---
 
@@ -299,7 +337,11 @@ No descuenta stock (eso ya lo hizo la muestra).
 
 ## 🎯 Dependencia
 
-La cata pertenece a una muestra.
+```
+Lote
+  → Muestras
+      → Catas
+```
 
 Es independiente del análisis físico.
 
@@ -308,23 +350,64 @@ Puede existir:
 * Con análisis físico
 * Sin análisis físico
 
-Relación:
-
-```
-Lote
-  → Muestras
-      → Catas
-```
-
 ---
 
-## 📌 Características
+## 📌 Características generales
 
 * Puede registrarse el mismo día
 * Puede registrarse semanas después
 * Puede haber múltiples catas por muestra
 * No cambia estado
 * No afecta stock
+
+---
+
+## 📌 Evaluación sensorial (escala 0–10)
+
+Atributos evaluados:
+
+* Tostado
+* Defecto
+* Cacao
+* Amargor
+* Astringencia
+* Acidez
+* Fruta fresca
+* Fruta marrón
+* Vegetal
+* Floral
+* Madera
+* Especies
+* Nueces
+* Caramel / pan
+* Global
+
+---
+
+## 📌 Leyenda de intensidad
+
+Debe mostrarse siempre:
+
+* 0: Ausente
+* 1: Solo un rastro
+* 2: Presente con baja intensidad
+* 3–5: Presente
+* 6: Caracteriza claramente la muestra
+* 7–8: Dominante
+* 9–10: Máximo, intensidad muy fuerte
+
+---
+
+## 🔴 Cata especial (ADMIN)
+
+Solo el administrador podrá:
+
+* Mezclar muestras
+* Seleccionar múltiples muestras
+* Incluso mezclar muestras de diferentes lotes
+* Registrar una cata combinada
+
+Esto crea una cata independiente del lote original.
 
 ---
 
@@ -339,32 +422,21 @@ LISTO_PARA_ALMACEN
 ALMACEN
 ```
 
-Una vez en ALMACEN:
+Una vez en:
 
-* Permanece ahí hasta agotar stock
-* No cambia más de estado productivo
+```
+ALMACEN
+```
 
----
+El lote:
 
-# 🧠 SISTEMA CONCEPTUAL FINAL
-
-Tu sistema ahora es:
-
-Un sistema integral de:
-
-* Trazabilidad por lote
-* Control técnico de fermentación
-* Control pasivo de secado
-* Control logístico de almacén
-* Gestión de inventario dinámico
-* Gestión de muestras físicas
-* Control de calidad técnico
-* Evaluación sensorial
-* Base para análisis climático futuro
+* Permanece en ese estado
+* Solo cambia su stock dinámicamente
+* No vuelve a etapas productivas
 
 ---
 
-# 🧩 Modelo limpio simplificado
+# 🧠 Arquitectura Conceptual Final
 
 ```
 Lote
@@ -373,7 +445,24 @@ Lote
  ├── Almacen
  ├── Muestras
  │     ├── AnalisisFisico
- │     └── Cata
+ │     │      ├── Defectos
+ │     │      └── Corte
+ │     └── Catas
  └── TemperaturaAmbiente (externo)
 ```
 
+---
+
+# 🧩 Qué lograste con este modelo
+
+Tu sistema ahora es:
+
+✔ Sistema de trazabilidad productiva
+✔ Sistema técnico de control de fermentación
+✔ Sistema logístico de inventario
+✔ Sistema de control de calidad estructurado
+✔ Sistema sensorial profesional
+✔ Base para análisis climático
+✔ Soporte para catas experimentales (mezclas)
+
+---
