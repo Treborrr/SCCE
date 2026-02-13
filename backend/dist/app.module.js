@@ -15,6 +15,8 @@ const lotes_module_1 = require("./lotes/lotes.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
 const auth_module_1 = require("./auth/auth.module");
 const config_1 = require("@nestjs/config");
+const fermentacion_module_1 = require("./fermentacion/fermentacion.module");
+const secado_module_1 = require("./secado/secado.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,7 +29,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-            })
+            }), fermentacion_module_1.FermentacionModule, secado_module_1.SecadoModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

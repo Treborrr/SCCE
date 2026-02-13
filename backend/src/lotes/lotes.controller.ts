@@ -5,18 +5,21 @@ import { RolesGuard } from '../auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('lotes')
 export class LotesController {
   constructor(private readonly lotesService: LotesService) {}
 
   @Get()
+  @Roles('ADMIN')
   findAll() {
     return this.lotesService.findAll();
   }
 
   @Post()
-  create(@Body() dto: CreateLoteDto) {
-    return this.lotesService.create(dto);
+  @Roles('ADMIN', 'OPERADOR_ALMACEN')
+  create(@Body() body: any) {
+    return this.lotesService.create(body);
   }
 }

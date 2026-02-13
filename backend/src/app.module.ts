@@ -6,6 +6,8 @@ import { LotesModule } from './lotes/lotes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { FermentacionModule } from './fermentacion/fermentacion.module';
+import { SecadoModule } from './secado/secado.module';
 
 @Module({
   imports: [
@@ -15,7 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule, 
     ConfigModule.forRoot({
       isGlobal: true,
-    })],
+    }), FermentacionModule, SecadoModule],
   controllers: [AppController],
   providers: [AppService],
 })

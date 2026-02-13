@@ -12,43 +12,35 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LotesController = void 0;
+exports.FermentacionController = void 0;
 const common_1 = require("@nestjs/common");
-const lotes_service_1 = require("./lotes.service");
-const roles_guard_1 = require("../auth/roles.guard");
+const fermentacion_service_1 = require("./fermentacion.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
-let LotesController = class LotesController {
-    lotesService;
-    constructor(lotesService) {
-        this.lotesService = lotesService;
+let FermentacionController = class FermentacionController {
+    fermentacionService;
+    constructor(fermentacionService) {
+        this.fermentacionService = fermentacionService;
     }
-    findAll() {
-        return this.lotesService.findAll();
-    }
-    create(body) {
-        return this.lotesService.create(body);
+    async crearEvento(loteId, body, req) {
+        return this.fermentacionService.crearEvento(loteId, body, req.user.id);
     }
 };
-exports.LotesController = LotesController;
+exports.FermentacionController = FermentacionController;
 __decorate([
-    (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)('ADMIN'),
+    (0, common_1.Post)(':loteId/evento'),
+    __param(0, (0, common_1.Param)('loteId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], LotesController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('ADMIN', 'OPERADOR_ALMACEN'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], LotesController.prototype, "create", null);
-exports.LotesController = LotesController = __decorate([
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], FermentacionController.prototype, "crearEvento", null);
+exports.FermentacionController = FermentacionController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, common_1.Controller)('lotes'),
-    __metadata("design:paramtypes", [lotes_service_1.LotesService])
-], LotesController);
-//# sourceMappingURL=lotes.controller.js.map
+    (0, roles_decorator_1.Roles)('ADMIN', 'OPERADOR_FERMENTACION'),
+    (0, common_1.Controller)('fermentacion'),
+    __metadata("design:paramtypes", [fermentacion_service_1.FermentacionService])
+], FermentacionController);
+//# sourceMappingURL=fermentacion.controller.js.map
