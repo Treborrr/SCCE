@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Pool } from 'pg';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(@Inject('PG_POOL') private pool: Pool) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('test-db')
+  async testDb(){
+    const result = await this.pool.query('SELECT NOW()');
+    return result.rows;
   }
 }

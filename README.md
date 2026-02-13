@@ -470,13 +470,9 @@ Tu sistema ahora es:
 Para Quitar el stock de los Lotes, lo que yo quiero crear un nuevo loteA (no se como llamarlo) que seria la suma de los Lotes que ya registramos primero, las que pasaron por el proceso de fermentacion secado y tal, una vez que estan en almacen se podrian armar estos lotes mas grandes que(lote a) de ese lote A pasara por un proceso de seleecion y van creando lotes mas pequenos pero el sistema debe crear hasta esos lotes A
 
 ---
-
-# 📄 SCRIPT COMPLETO — SISTEMA CACAO
-
-```sql
 -- ==========================================
--- SISTEMA INTEGRAL DE GESTION DE CACAO
--- PostgreSQL
+-- SISTEMA INDUSTRIAL DE TRAZABILIDAD CACAO
+-- VERSION INDUSTRIAL BASICA (INMUTABLE)
 -- ==========================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -511,6 +507,29 @@ CREATE TYPE fuente_temperatura AS ENUM (
     'SENSOR'
 );
 
+CREATE TYPE rol_usuario AS ENUM (
+    'ADMIN',
+    'OPERADOR_FERMENTACION',
+    'OPERADOR_SECADO',
+    'OPERADOR_ALMACEN',
+    'CALIDAD',
+    'CATADOR'
+);
+
+-- ==========================================
+-- USUARIOS
+-- ==========================================
+
+CREATE TABLE usuarios (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nombre VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    rol rol_usuario NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ==========================================
 -- LOTES PRODUCTIVOS
 -- ==========================================
@@ -525,6 +544,7 @@ CREATE TABLE lotes (
     kg_neto_final NUMERIC(12,2),
     rendimiento NUMERIC(6,2),
     stock_actual NUMERIC(12,2) DEFAULT 0,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -563,6 +583,7 @@ CREATE TABLE fermentacion_eventos (
     prueba_corte BOOLEAN DEFAULT FALSE,
     foto_url TEXT,
     descripcion TEXT,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -578,6 +599,7 @@ CREATE TABLE secados (
     fecha_fin DATE,
     hora_fin TIME,
     porcentaje_secado NUMERIC(5,2),
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -592,6 +614,7 @@ CREATE TABLE almacenes (
     hora TIME NOT NULL,
     sacos INTEGER NOT NULL,
     kg_brutos NUMERIC(12,2) NOT NULL,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -605,6 +628,7 @@ CREATE TABLE muestras (
     fecha DATE NOT NULL,
     peso_muestra_gramos NUMERIC(10,2) NOT NULL,
     stock_descontado_kg NUMERIC(10,3) NOT NULL,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -621,10 +645,9 @@ CREATE TABLE analisis_fisico (
     porcentaje_fermentacion NUMERIC(5,2),
     foto_url TEXT,
     observaciones TEXT,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
-
--- DEFECTOS FISICOS
 
 CREATE TABLE analisis_defectos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -633,8 +656,6 @@ CREATE TABLE analisis_defectos (
     gramos NUMERIC(10,2),
     porcentaje NUMERIC(6,2)
 );
-
--- DETALLE PRUEBA DE CORTE
 
 CREATE TABLE analisis_corte_detalle (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -652,6 +673,7 @@ CREATE TABLE catas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     muestra_id UUID REFERENCES muestras(id),
     tipo tipo_cata NOT NULL,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -675,8 +697,6 @@ CREATE TABLE cata_detalle (
     global INTEGER CHECK (global BETWEEN 0 AND 10)
 );
 
--- MEZCLA DE MUESTRAS (ADMIN)
-
 CREATE TABLE cata_mezcla_muestras (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     cata_id UUID REFERENCES catas(id) ON DELETE CASCADE,
@@ -684,7 +704,7 @@ CREATE TABLE cata_mezcla_muestras (
 );
 
 -- ==========================================
--- LOTES DERIVADOS (LOGISTICOS)
+-- LOTES DERIVADOS
 -- ==========================================
 
 CREATE TABLE lotes_derivados (
@@ -692,10 +712,9 @@ CREATE TABLE lotes_derivados (
     codigo VARCHAR(30) UNIQUE NOT NULL,
     fecha_creacion DATE NOT NULL,
     stock_actual NUMERIC(12,2) NOT NULL,
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
-
--- RELACION CON LOTES ORIGEN
 
 CREATE TABLE lote_derivado_origen (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -703,8 +722,6 @@ CREATE TABLE lote_derivado_origen (
     lote_origen_id UUID REFERENCES lotes(id),
     cantidad_kg NUMERIC(12,2) NOT NULL
 );
-
--- SUBDIVISION DE LOTES DERIVADOS
 
 CREATE TABLE lote_derivado_padre (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -723,6 +740,7 @@ CREATE TABLE temperatura_ambiente (
     hora TIME NOT NULL,
     temperatura NUMERIC(6,2) NOT NULL,
     fuente fuente_temperatura DEFAULT 'MANUAL',
+    created_by UUID REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -736,23 +754,477 @@ CREATE INDEX idx_analisis_muestra ON analisis_fisico(muestra_id);
 CREATE INDEX idx_cata_muestra ON catas(muestra_id);
 CREATE INDEX idx_lote_derivado_origen ON lote_derivado_origen(lote_derivado_id);
 CREATE INDEX idx_temp_fecha ON temperatura_ambiente(fecha);
+
+---
+
+# 📘 DOCUMENTACIÓN TÉCNICA
+
+## Sistema Industrial de Trazabilidad de Cacao (Modelo Inmutable)
+
+---
+
+# 1️⃣ FILOSOFÍA DEL DISEÑO
+
+Este sistema fue diseñado bajo los siguientes principios:
+
+* Modelo orientado a eventos
+* Inmutabilidad (no edición de registros)
+* Trazabilidad humana mediante `created_by`
+* Separación clara entre proceso productivo y logística
+* Inventario dinámico controlado
+* Escalabilidad industrial sin sobreingeniería
+
+La base permite reconstruir:
+
+* El proceso técnico del lote
+* Las transformaciones físicas
+* Las extracciones
+* Las mezclas
+* La responsabilidad humana
+
+---
+
+# 2️⃣ EXTENSIÓN UUID
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
 
----
+Permite generación de UUID automáticos.
 
-# 🧠 Lo que este script ya soporta
+Razón:
 
-✔ Producción completa
-✔ Inventario dinámico
-✔ Muestras con descuento real
-✔ Análisis físico estructurado
-✔ Prueba de corte detallada
-✔ Cata profesional 0–10
-✔ Mezcla de muestras
-✔ Lotes derivados
-✔ Subdivisión de lotes
-✔ Trazabilidad en árbol
-✔ Temperatura externa
+* Evita dependencia de secuencias
+* Facilita distribución futura
+* Es estándar en sistemas industriales
 
 ---
 
+# 3️⃣ ENUMS
+
+Los ENUMS evitan errores de escritura y garantizan consistencia.
+
+---
+
+## estado_lote
+
+Controla la fase productiva del lote.
+
+Estados posibles:
+
+* INGRESADO
+* LISTO_PARA_FERMENTACION
+* FERMENTACION
+* SECADO
+* LISTO_PARA_ALMACEN
+* ALMACEN
+
+Problema que resuelve:
+
+Evita estados inválidos y mantiene coherencia del flujo productivo.
+
+---
+
+## tipo_evento_fermentacion
+
+Define la naturaleza del evento técnico:
+
+* INICIO
+* REMOCION
+* CONTROL
+* FINAL
+
+Diseño:
+
+La fermentación no es editable.
+Cada acción es un evento.
+
+Esto permite reconstrucción histórica completa.
+
+---
+
+## tipo_cata
+
+* NORMAL
+* MEZCLA
+
+Permite diferenciar:
+
+* Cata de muestra individual
+* Cata combinada de varias muestras
+
+---
+
+## fuente_temperatura
+
+Permite saber si la temperatura fue:
+
+* MANUAL
+* SENSOR
+
+Pensado para futura integración IoT.
+
+---
+
+## rol_usuario
+
+Define control de acceso.
+
+Roles separados por etapa operativa.
+
+---
+
+# 4️⃣ USUARIOS
+
+Tabla `usuarios`
+
+Resuelve:
+
+* Autenticación
+* Control de acceso
+* Responsabilidad
+* Trazabilidad humana
+
+Cada registro productivo apunta a:
+
+```
+created_by → usuarios.id
+```
+
+No existe `updated_by` porque el modelo es inmutable.
+
+---
+
+# 5️⃣ LOTES PRODUCTIVOS
+
+Tabla central del sistema.
+
+Representa:
+
+El lote físico que pasa por el proceso completo.
+
+Campos clave:
+
+* kg_baba_compra → entrada inicial
+* estado → controla etapa
+* stock_actual → inventario dinámico
+* kg_neto_final → valor final tras secado
+* rendimiento → eficiencia del proceso
+
+Diseño:
+
+* El estado controla transición productiva
+* El stock se actualiza por eventos derivados
+
+---
+
+# 6️⃣ PROVEEDORES
+
+Permite:
+
+* Un lote con múltiples proveedores
+* Unión de compras en un solo lote físico
+
+Tabla intermedia:
+
+`lote_proveedores`
+
+Diseño correcto para relación N:M.
+
+---
+
+# 7️⃣ FERMENTACIÓN
+
+Tabla: `fermentacion_eventos`
+
+Diseño clave:
+
+* Modelo orientado a eventos
+* No edición
+* Cada acción es un registro
+
+Permite reconstruir:
+
+* Secuencia exacta
+* Parámetros técnicos por día
+* Prueba de corte
+* Responsabilidad humana
+
+No existe "editar fermentación".
+Si hay error → eliminar evento → registrar nuevo.
+
+---
+
+# 8️⃣ SECADO
+
+Tabla: `secados`
+
+Una sola fila por lote.
+
+Controla:
+
+* Inicio automático
+* Fin manual
+* % secado
+
+Diseño:
+
+Secado es proceso pasivo.
+No requiere eventos múltiples.
+
+---
+
+# 9️⃣ ALMACÉN
+
+Tabla: `almacenes`
+
+Marca el momento en que:
+
+El lote se convierte en inventario real.
+
+Aquí se calcula:
+
+* kg_neto_final
+* rendimiento
+* stock_actual inicial
+
+---
+
+# 🔟 MUESTRAS
+
+Tabla: `muestras`
+
+Entidad clave del modelo industrial.
+
+Resuelve:
+
+* Extracción física
+* Descuento de stock
+* Base para análisis
+
+El descuento se registra explícitamente en:
+
+```
+stock_descontado_kg
+```
+
+Diseño correcto:
+El análisis no descuenta stock.
+La muestra sí.
+
+---
+
+# 11️⃣ ANÁLISIS FÍSICO
+
+Tabla: `analisis_fisico`
+
+Pertenece a una muestra.
+
+Permite:
+
+* Humedad
+* Corte
+* % fermentación
+* Foto
+* Observaciones
+
+Tablas relacionadas:
+
+* analisis_defectos
+* analisis_corte_detalle
+
+Diseño normalizado.
+Flexible.
+Escalable.
+
+---
+
+# 12️⃣ CATA
+
+Tabla: `catas`
+
+Independiente del análisis físico.
+
+Puede existir:
+
+* Con análisis
+* Sin análisis
+* Como mezcla
+
+`cata_detalle` contiene atributos sensoriales (0-10).
+
+Diseño correcto:
+Separación clara entre evaluación técnica y sensorial.
+
+---
+
+# 13️⃣ LOTES DERIVADOS
+
+Permite:
+
+* Consolidar lotes almacenados
+* Crear lotes logísticos
+* Subdividirlos
+
+Tablas:
+
+* lotes_derivados
+* lote_derivado_origen
+* lote_derivado_padre
+
+Diseño:
+
+Permite árbol de transformación logística.
+
+Esto es diseño industrial real.
+
+---
+
+# 14️⃣ TEMPERATURA AMBIENTE
+
+Tabla independiente.
+
+No depende del lote.
+
+Permite:
+
+* Correlacionar secado vs clima
+* Integración futura con sensores
+
+Diseño desacoplado.
+Correcto.
+
+---
+
+# 🟢 CICLO COMPLETO DEL LOTE (VALIDADO CONTRA LA BASE)
+
+Ahora verificamos si el modelo cumple el flujo real.
+
+---
+
+## 1️⃣ INGRESO
+
+Se crea en:
+
+`lotes`
+
+Estado:
+
+INGRESADO
+
+Tiene proveedor(es).
+
+Tiene created_by.
+
+---
+
+## 2️⃣ FERMENTACIÓN
+
+Estado cambia a:
+
+FERMENTACION
+
+Se crean múltiples registros en:
+
+`fermentacion_eventos`
+
+Hasta que se crea evento tipo FINAL.
+
+---
+
+## 3️⃣ SECADO
+
+Se crea registro en:
+
+`secados`
+
+Con fecha_inicio automática.
+
+Cuando termina:
+
+Estado pasa a:
+
+LISTO_PARA_ALMACEN
+
+---
+
+## 4️⃣ ALMACÉN
+
+Se crea registro en:
+
+`almacenes`
+
+Se calculan:
+
+* kg_neto_final
+* rendimiento
+* stock_actual
+
+Estado pasa a:
+
+ALMACEN
+
+---
+
+## 5️⃣ MUESTRA
+
+Se crea en:
+
+`muestras`
+
+Se descuenta stock_actual.
+
+---
+
+## 6️⃣ ANÁLISIS FÍSICO
+
+Se crea en:
+
+`analisis_fisico`
+
+Relacionado a muestra.
+
+No afecta stock.
+
+---
+
+## 7️⃣ CATA
+
+Se crea en:
+
+`catas`
+
+Puede ser:
+
+* Normal
+* Mezcla
+
+No afecta stock.
+
+---
+
+## 8️⃣ LOTES DERIVADOS
+
+Se crea en:
+
+`lotes_derivados`
+
+Se transfieren cantidades desde lotes almacenados.
+
+Se crea árbol logístico.
+
+---
+
+# ✅ CONCLUSIÓN
+
+Tu modelo ahora es:
+
+✔ Industrial
+✔ Inmutable
+✔ Trazable
+✔ Responsable
+✔ Escalable
+✔ Coherente con el flujo real
+✔ Sin sobreingeniería
+
+---
