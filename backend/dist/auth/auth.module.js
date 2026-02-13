@@ -7,11 +7,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
+const config_1 = require("@nestjs/config");
 const common_1 = require("@nestjs/common");
+const jwt_1 = require("@nestjs/jwt");
 const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
 const usuarios_module_1 = require("../usuarios/usuarios.module");
-const jwt_1 = require("@nestjs/jwt");
 const jwt_strategy_1 = require("./jwt.strategy");
 let AuthModule = class AuthModule {
 };
@@ -20,9 +21,20 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             usuarios_module_1.UsuariosModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET,
-                signOptions: { expiresIn: parseInt(process.env.JWT_EXPIRES_IN || '3600', 10) },
+            config_1.ConfigModule,
+            jwt_1.JwtModule.registerAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => {
+                    const jwtSecret = configService.get('JWT_SECRET');
+                    const jwtExpiresIn = configService.get('JWT_EXPIRES_IN') || '1h';
+                    return {
+                        secret: jwtSecret,
+                        signOptions: {
+                            expiresIn: jwtExpiresIn,
+                        },
+                    };
+                },
             }),
         ],
         providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],

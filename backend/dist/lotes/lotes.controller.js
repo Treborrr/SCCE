@@ -16,6 +16,8 @@ exports.LotesController = void 0;
 const common_1 = require("@nestjs/common");
 const lotes_service_1 = require("./lotes.service");
 const create_lote_dto_1 = require("./dto/create-lote.dto");
+const roles_guard_1 = require("../auth/roles.guard");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let LotesController = class LotesController {
     lotesService;
     constructor(lotesService) {
@@ -43,6 +45,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], LotesController.prototype, "create", null);
 exports.LotesController = LotesController = __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('lotes'),
     __metadata("design:paramtypes", [lotes_service_1.LotesService])
 ], LotesController);

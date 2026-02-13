@@ -14,12 +14,21 @@ const database_module_1 = require("./database/database.module");
 const lotes_module_1 = require("./lotes/lotes.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
 const auth_module_1 = require("./auth/auth.module");
+const config_1 = require("@nestjs/config");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, lotes_module_1.LotesModule, usuarios_module_1.UsuariosModule, auth_module_1.AuthModule],
+        imports: [
+            database_module_1.DatabaseModule,
+            lotes_module_1.LotesModule,
+            usuarios_module_1.UsuariosModule,
+            auth_module_1.AuthModule,
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+            })
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })
