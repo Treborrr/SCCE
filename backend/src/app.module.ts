@@ -12,6 +12,7 @@ import { AlmacenModule } from './almacen/almacen.module';
 import { MuestrasModule } from './muestras/muestras.module';
 import { AnalisisModule } from './analisis/analisis.module';
 import { CataModule } from './cata/cata.module';
+import { LotesDerivadosModule } from './lotes-derivados/lotes-derivados.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { CataModule } from './cata/cata.module';
     AuthModule, 
     ConfigModule.forRoot({
       isGlobal: true,
-    }), FermentacionModule, SecadoModule, AlmacenModule, MuestrasModule, AnalisisModule, CataModule],
+    }), FermentacionModule, SecadoModule, AlmacenModule, MuestrasModule, AnalisisModule, CataModule, LotesDerivadosModule],
   controllers: [AppController],
   providers: [AppService],
 })

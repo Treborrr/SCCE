@@ -1273,4 +1273,4 @@ Y además:
 Tomar stock de uno o varios lotes base
 Crear un nuevo lote consolidado (derivado)
 Ese nuevo lote tendrá su propio stock
-Un lote derivado puede subdividirse en otros derivados![![alt text](imagen-1.png)](imagen.png)
+Un lote derivado puede subdividirse en otros derivados
