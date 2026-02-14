@@ -1228,3 +1228,49 @@ Tu modelo ahora es:
 ✔ Sin sobreingeniería
 
 ---
+endpoints: 
+
+curl -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d '{"email":"admin@cacao.com","password":"123456"}'
+
+consulta de lote
+curl http://localhost:3000/lotes \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZDFjNjlkMi1kNjhhLTQwOGEtOTZlNS1jOGI4YTY3ZTMzOTAiLCJlbWFpbCI6ImFkbWluQGNhY2FvLmNvbSIsInJvbCI6IkFETUlOIiwiaWF0IjoxNzcxMDQ0NTgxLCJleHAiOjE3NzEwNDgxODF9.JzUNgGsc3A_l8KDl5WL1nmuy2rIRkaYwdknr8pdcwO0"
+
+crear lote
+
+@Treborrr ➜ /workspaces/SCCE/backend (master) $ curl -X POST http://localhost:3000/lotes \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZDFjNjlkMi1kNjhhLTQwOGEtOTZlNS1jOGI4YTY3ZTMzOTAiLCJlbWFpbCI6ImFkbWluQGNhY2FvLmNvbSIsInJvbCI6IkFETUlOIiwiaWF0IjoxNzcwOTY5MjQ2LCJleHAiOjE3NzA5NzI4NDZ9.BaQdVlPVRUr6pzOG7_CncDiaRUTX6TsLb3cCvqMZ6IQ" \
+-H "Content-Type: application/json" \
+-d '{
+  "codigo":"L001",
+  "fecha_compra":"2026-02-13",
+  "kg_baba_compra":100,
+  "kg_segunda":5
+}'
+{"id":"b3f6836d-d844-457e-89aa-f7334e3e8fa6","codigo":"L001","fecha_compra":"2026-02-13T00:00:00.000Z","kg_baba_compra":"100.00","kg_segunda":"5.00","estado":"INGRESADO","kg_neto_final":null,"rendimiento":null,"stock_actual":"0.00","created_by":null,"created_at":"2026-02-13T07:55:03.320Z"}
+
+creacion de cata, devuelve lostokens 
+curl -X POST http://localhost:3000/cata/35d5aa9b-33c7-419b-aec7-19e6442cece6/crear \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZDFjNjlkMi1kNjhhLTQwOGEtOTZlNS1jOGI4YTY3ZTMzOTAiLCJlbWFpbCI6ImFkbWluQGNhY2FvLmNvbSIsInJvbCI6IkFETUlOIiwiaWF0IjoxNzcxMDQ0NTgxLCJleHAiOjE3NzEwNDgxODF9.JzUNgGsc3A_l8KDl5WL1nmuy2rIRkaYwdknr8pdcwO0" \
+-H "Content-Type: application/json" \
+-d '{
+  "tipo":"NORMAL",
+  "total_catadores":2
+}'
+
+
+
+1️⃣ ¿Qué es realmente un Lote Derivado?
+
+existen:
+
+Lotes Productivos → pasan por proceso completo → ALMACEN
+
+Luego en almacén tienes stock.
+
+Y además:
+
+Tomar stock de uno o varios lotes base
+Crear un nuevo lote consolidado (derivado)
+Ese nuevo lote tendrá su propio stock
+Un lote derivado puede subdividirse en otros derivados![![alt text](imagen-1.png)](imagen.png)

@@ -20,6 +20,7 @@ const secado_module_1 = require("./secado/secado.module");
 const almacen_module_1 = require("./almacen/almacen.module");
 const muestras_module_1 = require("./muestras/muestras.module");
 const analisis_module_1 = require("./analisis/analisis.module");
+const cata_module_1 = require("./cata/cata.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -32,7 +33,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-            }), fermentacion_module_1.FermentacionModule, secado_module_1.SecadoModule, almacen_module_1.AlmacenModule, muestras_module_1.MuestrasModule, analisis_module_1.AnalisisModule
+            }), fermentacion_module_1.FermentacionModule, secado_module_1.SecadoModule, almacen_module_1.AlmacenModule, muestras_module_1.MuestrasModule, analisis_module_1.AnalisisModule, cata_module_1.CataModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
