@@ -1,1 +1,1 @@
-{"version":3,"file":"create-lote.dto.js","sourceRoot":"","sources":["../../../src/lotes/dto/create-lote.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,aAAa;IACxB,MAAM,CAAS;IACf,YAAY,CAAS;IACrB,cAAc,CAAS;IACvB,UAAU,CAAU;CACrB;AALD,sCAKC"}
+{"version":3,"file":"create-lote.dto.js","sourceRoot":"","sources":["../../../src/lotes/dto/create-lote.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,aAAa;IACxB,MAAM,CAAS;IACf,YAAY,CAAS;IACrB,gBAAgB,CAAS;IACzB,cAAc,CAAS;IACvB,UAAU,CAAS;CACpB;AAND,sCAMC"}

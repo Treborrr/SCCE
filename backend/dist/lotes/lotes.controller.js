@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LotesController = void 0;
 const common_1 = require("@nestjs/common");
 const lotes_service_1 = require("./lotes.service");
+const create_lote_dto_1 = require("./dto/create-lote.dto");
 const roles_guard_1 = require("../auth/roles.guard");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
@@ -26,8 +27,8 @@ let LotesController = class LotesController {
     findAll() {
         return this.lotesService.findAll();
     }
-    create(body) {
-        return this.lotesService.create(body);
+    create(dto, req) {
+        return this.lotesService.create(dto, req.user.userId);
     }
 };
 exports.LotesController = LotesController;
@@ -40,10 +41,11 @@ __decorate([
 ], LotesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('ADMIN', 'OPERADOR_ALMACEN'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_lote_dto_1.CreateLoteDto, Object]),
     __metadata("design:returntype", void 0)
 ], LotesController.prototype, "create", null);
 exports.LotesController = LotesController = __decorate([

@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Body, Post, UseGuards, Req } from '@nestjs/common';
 import { LotesService } from './lotes.service';
 import { CreateLoteDto } from './dto/create-lote.dto';
 import { RolesGuard } from '../auth/roles.guard';
@@ -17,9 +17,9 @@ export class LotesController {
     return this.lotesService.findAll();
   }
 
-  @Post()
-  @Roles('ADMIN', 'OPERADOR_ALMACEN')
-  create(@Body() body: any) {
-    return this.lotesService.create(body);
+ @Post()
+  @UseGuards(JwtAuthGuard)
+  create(@Body() dto: CreateLoteDto, @Req() req) {
+    return this.lotesService.create(dto, req.user.userId);
   }
 }

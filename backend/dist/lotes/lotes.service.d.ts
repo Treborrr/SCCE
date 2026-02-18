@@ -3,6 +3,10 @@ import { CreateLoteDto } from './dto/create-lote.dto';
 export declare class LotesService {
     private pool;
     constructor(pool: Pool);
+    create(dto: CreateLoteDto, userId: string): Promise<any>;
     findAll(): Promise<any[]>;
-    create(dto: CreateLoteDto): Promise<any>;
+    findOne(id: string): Promise<any>;
+    remove(id: string): Promise<{
+        message: string;
+    }>;
 }

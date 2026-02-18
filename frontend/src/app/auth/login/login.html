@@ -1,25 +1,40 @@
-<div class="login-container">
-  <h2>Sistema Cacao</h2>
+<div class="login-wrapper">
+  <div class="login-card">
 
-  <form (ngSubmit)="login()">
-    <input
-      type="email"
-      placeholder="Correo"
-      [(ngModel)]="email"
-      name="email"
-      required>
+    <div class="logo">
+      <h1>Cacao</h1>
+      <span>Industrial System</span>
+    </div>
 
-    <input
-      type="password"
-      placeholder="Contraseña"
-      [(ngModel)]="password"
-      name="password"
-      required>
+    <form (ngSubmit)="login()" #form="ngForm">
 
-    <button type="submit">Ingresar</button>
+      <div class="input-group">
+        <label>Correo</label>
+        <input 
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required>
+      </div>
 
-    <p class="error" *ngIf="errorMessage">
-      {{ errorMessage }}
-    </p>
-  </form>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input 
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          required>
+      </div>
+
+      <button type="submit">
+        Ingresar
+      </button>
+
+      <p class="error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </p>
+
+    </form>
+
+  </div>
 </div>

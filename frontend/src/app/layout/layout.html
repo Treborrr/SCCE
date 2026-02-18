@@ -1,0 +1,32 @@
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="logo">
+      Cacao
+    </div>
+
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/lotes" routerLinkActive="active">Lotes</a>
+      <a routerLink="/fermentacion" routerLinkActive="active">Fermentación</a>
+      <a routerLink="/secado" routerLinkActive="active">Secado</a>
+      <a routerLink="/almacen" routerLinkActive="active">Almacén</a>
+      <a routerLink="/derivados" routerLinkActive="active">Derivados</a>
+    </nav>
+
+    <div class="bottom">
+      <a routerLink="/login">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="title">Sistema Industrial</div>
+    </header>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+</div>

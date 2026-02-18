@@ -7,7 +7,7 @@ import { tap } from 'rxjs';
 })
 export class AuthService {
 
-  private apiUrl = 'https://obscure-goldfish-p597qjw6rvrc6x4r-3000.app.github.dev';
+  private apiUrl = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {}
 

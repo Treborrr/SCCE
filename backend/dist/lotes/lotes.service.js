@@ -14,52 +14,70 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LotesService = void 0;
 const common_1 = require("@nestjs/common");
+const common_2 = require("@nestjs/common");
 const pg_1 = require("pg");
 let LotesService = class LotesService {
     pool;
     constructor(pool) {
         this.pool = pool;
     }
-    async findAll() {
-        const result = await this.pool.query('SELECT * FROM lotes');
-        return result.rows;
-    }
-    async create(dto) {
-        const query = `
+    async create(dto, userId) {
+        const existe = await this.pool.query(`SELECT id FROM lotes WHERE codigo = $1`, [dto.codigo]);
+        if (existe.rows.length > 0) {
+            throw new common_1.BadRequestException('Ya existe un lote con ese código');
+        }
+        const result = await this.pool.query(`
       INSERT INTO lotes (
-        id,
         codigo,
         fecha_compra,
+        proveedor_nombre,
         kg_baba_compra,
         kg_segunda,
         estado,
-        created_at
+        stock_actual,
+        created_by
       )
-      VALUES (
-        gen_random_uuid(),
-        $1,
-        $2,
-        $3,
-        $4,
-        'INGRESADO',
-        NOW()
-      )
-      RETURNING *;
-    `;
-        const values = [
+      VALUES ($1, $2, $3, $4, $5, 'INGRESADO', 0, $6)
+      RETURNING *
+      `, [
             dto.codigo,
             dto.fecha_compra,
+            dto.proveedor_nombre,
             dto.kg_baba_compra,
-            dto.kg_segunda || 0
-        ];
-        const result = await this.pool.query(query, values);
+            dto.kg_segunda ?? 0,
+            userId
+        ]);
         return result.rows[0];
+    }
+    async findAll() {
+        const result = await this.pool.query(`
+      SELECT *
+      FROM lotes
+      ORDER BY created_at DESC
+    `);
+        return result.rows;
+    }
+    async findOne(id) {
+        const result = await this.pool.query(`SELECT * FROM lotes WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+            throw new common_1.BadRequestException('Lote no encontrado');
+        }
+        return result.rows[0];
+    }
+    async remove(id) {
+        const result = await this.pool.query(`DELETE FROM lotes WHERE id = $1 RETURNING *`, [id]);
+        if (result.rows.length === 0) {
+            throw new common_1.BadRequestException('Lote no encontrado');
+        }
+        return {
+            message: 'Lote eliminado correctamente'
+        };
     }
 };
 exports.LotesService = LotesService;
 exports.LotesService = LotesService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)('PG_POOL')),
+    __param(0, (0, common_2.Inject)('PG_POOL')),
     __metadata("design:paramtypes", [pg_1.Pool])
 ], LotesService);
 //# sourceMappingURL=lotes.service.js.map
