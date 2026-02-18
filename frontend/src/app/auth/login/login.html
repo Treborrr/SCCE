@@ -1,0 +1,25 @@
+<div class="login-container">
+  <h2>Sistema Cacao</h2>
+
+  <form (ngSubmit)="login()">
+    <input
+      type="email"
+      placeholder="Correo"
+      [(ngModel)]="email"
+      name="email"
+      required>
+
+    <input
+      type="password"
+      placeholder="Contraseña"
+      [(ngModel)]="password"
+      name="password"
+      required>
+
+    <button type="submit">Ingresar</button>
+
+    <p class="error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+  </form>
+</div>
