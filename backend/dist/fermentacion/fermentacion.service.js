@@ -228,14 +228,12 @@ let FermentacionService = class FermentacionService {
                 await client.query(`
           INSERT INTO secados (
             lote_id,
-            tipo,
             fecha_inicio,
             hora_inicio,
-            temperatura_ambiente,
             created_by
           )
-          VALUES ($1,'INICIO',$3,$4,$5,$6)
-          `, [loteId, userId]);
+          VALUES ($1,$2,$3,$4)
+          `, [loteId, data.fecha, data.hora, userId]);
             }
             await client.query('COMMIT');
             return {

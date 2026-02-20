@@ -4,6 +4,20 @@ import { Pool } from 'pg';
 @Injectable()
 export class AlmacenService {
   constructor(@Inject('PG_POOL') private pool: Pool) {}
+  async obtenerLotesListos() {
+    return this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        l.kg_baba_compra
+      FROM lotes l
+      WHERE l.estado IN ('LISTO_PARA_ALMACEN', 'ALMACEN')
+      ORDER BY l.created_at DESC
+    `).then(r => r.rows);
+  }
 
   async ingresarAlmacen(loteId: string, data: any, userId: string) {
     const client = await this.pool.connect();

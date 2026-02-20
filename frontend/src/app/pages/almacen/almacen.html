@@ -1,0 +1,177 @@
+<div class="page">
+
+  <h2>Almacén</h2>
+
+  <!-- TABLA PRINCIPAL -->
+  <table *ngIf="lotes.length > 0" class="tabla">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Proveedor</th>
+        <th>Fecha Compra</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let lote of lotes">
+        <td>{{ lote.codigo }}</td>
+        <td>{{ lote.proveedor_nombre }}</td>
+        <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'badge-ready': lote.estado === 'LISTO_PARA_ALMACEN',
+              'badge-done': lote.estado === 'ALMACEN'
+            }">
+            {{ lote.estado }}
+          </span>
+        </td>
+
+        <td>
+          <button *ngIf="lote.estado === 'LISTO_PARA_ALMACEN'"
+                  class="btn-primary"
+                  (click)="abrirModal(lote)">
+            Registrar Ingreso
+          </button>
+
+          <span *ngIf="lote.estado === 'ALMACEN'"
+                class="text-muted">
+            Registrado
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="lotes.length === 0" class="empty">
+    No hay lotes disponibles
+  </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- MODAL INGRESO ALMACÉN -->
+<!-- ========================= -->
+
+<div class="overlay" *ngIf="mostrarModal">
+
+  <div class="modal-box">
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h3>Ingreso a Almacén - {{ loteSeleccionado?.codigo }}</h3>
+      <button class="btn-close" (click)="cerrarModal()">✕</button>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DATOS INGRESO -->
+    <!-- ========================= -->
+
+    <div class="section-title">Datos de Ingreso</div>
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="form.fecha">
+      </div>
+
+      <div class="form-group">
+        <label>Hora</label>
+        <input type="time" [(ngModel)]="form.hora">
+      </div>
+
+      <div class="form-group">
+        <label>Sacos</label>
+        <input type="number"
+               [(ngModel)]="form.sacos"
+               (input)="calcularPreview()">
+      </div>
+
+      <div class="form-group">
+        <label>Kg Brutos</label>
+        <input type="number"
+               [(ngModel)]="form.kg_brutos"
+               (input)="calcularPreview()">
+      </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- RESULTADOS CALCULADOS -->
+    <!-- ========================= -->
+
+    <div class="section-title">Resultados Calculados</div>
+
+    <div class="preview-cards">
+
+      <!-- KG NETO -->
+      <div class="card-result">
+        <div class="card-label">Kg Neto</div>
+        <div class="card-value">
+          {{ animatedKgNeto }} kg
+        </div>
+      </div>
+
+      <!-- RENDIMIENTO -->
+      <div class="card-result"
+           [ngClass]="{
+             'good': animatedRendimiento > 80,
+             'bad': animatedRendimiento < 70
+           }">
+
+        <div class="card-label">Rendimiento</div>
+        <div class="card-value">
+          {{ animatedRendimiento }} %
+        </div>
+      </div>
+
+      <!-- PÉRDIDA -->
+      <div class="card-result loss-card">
+        <div class="card-label">Pérdida Estimada</div>
+        <div class="card-value">
+          {{ perdidaKg }} kg
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- ACCIONES -->
+    <!-- ========================= -->
+
+    <div class="modal-actions">
+
+      <button class="btn-secondary"
+              (click)="cerrarModal()">
+        Cancelar
+      </button>
+
+      <button class="btn-primary"
+              (click)="registrarIngreso()">
+        Guardar Ingreso
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ========================= -->
+<!-- TOAST MENSAJE -->
+<!-- ========================= -->
+
+<div *ngIf="mostrarMensaje"
+     class="toast"
+     [ngClass]="{
+       'toast-success': tipoMensaje === 'success',
+       'toast-error': tipoMensaje === 'error'
+     }">
+  {{ mensaje }}
+</div>

@@ -320,15 +320,13 @@ export class FermentacionService {
           `
           INSERT INTO secados (
             lote_id,
-            tipo,
             fecha_inicio,
             hora_inicio,
-            temperatura_ambiente,
             created_by
           )
-          VALUES ($1,'INICIO',$3,$4,$5,$6)
+          VALUES ($1,$2,$3,$4)
           `,
-          [loteId, userId],
+          [loteId, data.fecha , data.hora ,userId],
         );
       }
 

@@ -20,6 +20,20 @@ let AlmacenService = class AlmacenService {
     constructor(pool) {
         this.pool = pool;
     }
+    async obtenerLotesListos() {
+        return this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        l.kg_baba_compra
+      FROM lotes l
+      WHERE l.estado IN ('LISTO_PARA_ALMACEN', 'ALMACEN')
+      ORDER BY l.created_at DESC
+    `).then(r => r.rows);
+    }
     async ingresarAlmacen(loteId, data, userId) {
         const client = await this.pool.connect();
         try {
