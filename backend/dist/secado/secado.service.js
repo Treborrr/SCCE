@@ -20,6 +20,40 @@ let SecadoService = class SecadoService {
     constructor(pool) {
         this.pool = pool;
     }
+    async obtenerLotesEnSecado() {
+        const result = await this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        s.fecha_inicio,
+        s.hora_inicio
+      FROM lotes l
+      LEFT JOIN secados s ON s.lote_id = l.id
+      WHERE l.estado = 'SECADO'
+      ORDER BY l.fecha_compra DESC
+    `);
+        return result.rows;
+    }
+    async obtenerSecado(loteId) {
+        const result = await this.pool.query(`
+      SELECT *
+      FROM secados
+      WHERE lote_id = $1
+    `, [loteId]);
+        return result[0];
+    }
+    async obtenerEventos(loteId) {
+        const result = await this.pool.query(`
+      SELECT *
+      FROM secado_eventos
+      WHERE lote_id = $1
+      ORDER BY fecha ASC, hora ASC
+    `, [loteId]);
+        return result;
+    }
     async finalizarSecado(loteId, data, userId) {
         const client = await this.pool.connect();
         try {

@@ -3,6 +3,7 @@ import {
   Post,
   Param,
   Body,
+  Get,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -16,7 +17,15 @@ import { Roles } from '../auth/roles.decorator';
 @Controller('secado')
 export class SecadoController {
   constructor(private readonly secadoService: SecadoService) {}
+  @Get('lotes')
+  obtenerLotesEnSecado() {
+    return this.secadoService.obtenerLotesEnSecado();
+  }
 
+  @Get(':loteId/eventos')
+  obtenerEventos(@Param('loteId') loteId: string) {
+    return this.secadoService.obtenerEventos(loteId);
+  }
   @Post(':loteId/finalizar')
   async finalizarSecado(
     @Param('loteId') loteId: string,

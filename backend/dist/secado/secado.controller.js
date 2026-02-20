@@ -23,11 +23,30 @@ let SecadoController = class SecadoController {
     constructor(secadoService) {
         this.secadoService = secadoService;
     }
+    obtenerLotesEnSecado() {
+        return this.secadoService.obtenerLotesEnSecado();
+    }
+    obtenerEventos(loteId) {
+        return this.secadoService.obtenerEventos(loteId);
+    }
     async finalizarSecado(loteId, body, req) {
         return this.secadoService.finalizarSecado(loteId, body, req.user.id);
     }
 };
 exports.SecadoController = SecadoController;
+__decorate([
+    (0, common_1.Get)('lotes'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], SecadoController.prototype, "obtenerLotesEnSecado", null);
+__decorate([
+    (0, common_1.Get)(':loteId/eventos'),
+    __param(0, (0, common_1.Param)('loteId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], SecadoController.prototype, "obtenerEventos", null);
 __decorate([
     (0, common_1.Post)(':loteId/finalizar'),
     __param(0, (0, common_1.Param)('loteId')),

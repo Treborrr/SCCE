@@ -4,6 +4,46 @@ import { Pool } from 'pg';
 @Injectable()
 export class SecadoService {
   constructor(@Inject('PG_POOL') private pool: Pool) {}
+  async obtenerLotesEnSecado() {
+    const result = await this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        s.fecha_inicio,
+        s.hora_inicio
+      FROM lotes l
+      LEFT JOIN secados s ON s.lote_id = l.id
+      WHERE l.estado = 'SECADO'
+      ORDER BY l.fecha_compra DESC
+    `);
+    return result.rows;
+
+  }
+  async obtenerSecado(loteId: string) {
+
+    const result = await this.pool.query(`
+      SELECT *
+      FROM secados
+      WHERE lote_id = $1
+    `, [loteId]);
+
+    return result[0];
+  }
+
+  async obtenerEventos(loteId: string) {
+
+    const result = await this.pool.query(`
+      SELECT *
+      FROM secado_eventos
+      WHERE lote_id = $1
+      ORDER BY fecha ASC, hora ASC
+    `, [loteId]);
+
+    return result;
+  }
 
   async finalizarSecado(loteId: string, data: any, userId: string) {
     const client = await this.pool.connect();

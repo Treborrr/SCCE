@@ -24,12 +24,12 @@
       <tr *ngFor="let lote of lotes">
         <td>{{ lote.codigo }}</td>
         <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
-        <td>{{ lote.nombre_proveedor }}</td>
+        <td>{{ lote.proveedor_nombre }}</td>
         <td>{{ lote.estado }}</td>
         <td>
-          <button class="btn-primary"
-                  (click)="abrirPanel(lote)">
-            Ver Secado
+          <button class="btn-danger"
+                  (click)="abrirModalFinalizar(lote)">
+            Finalizar Secado
           </button>
         </td>
       </tr>
@@ -38,89 +38,66 @@
 
 </div>
 
+<!-- MODAL FINALIZAR -->
 
-<div class="overlay" *ngIf="mostrarPanel && loteSeleccionado">
+<div class="overlay" *ngIf="mostrarModal && loteSeleccionado">
 
-  <div class="panel">
+  <div class="modal-box">
 
-    <button class="cerrar" (click)="cerrarPanel()">X</button>
+    <h3>Finalizar Secado - {{ loteSeleccionado.codigo }}</h3>
 
-    <h3>
-      Secado - {{ loteSeleccionado.codigo }}
-    </h3>
+    <div class="form-grid">
 
-    <button class="btn-primary"
-            (click)="mostrarFormulario = true">
-      Finalizar Secado
-    </button>
+      <div>
+        <label>Fecha</label>
+        <input type="date"
+               [(ngModel)]="formFinal.fecha_fin">
+      </div>
 
-    <table class="tabla-eventos" *ngIf="eventos.length > 0">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Tipo</th>
-          <th>Temp. Ambiente</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let e of eventos">
-          <td>{{ e.fecha | date:'dd/MM/yyyy' }}</td>
-          <td>{{ e.hora }}</td>
-          <td>{{ e.tipo }}</td>
-          <td>{{ e.temperatura_ambiente || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <div>
+        <label>Hora</label>
+        <input type="time"
+               [(ngModel)]="formFinal.hora_fin">
+      </div>
 
-    <div *ngIf="eventos.length === 0" class="empty">
-      No hay registros de secado.
+      <div>
+        <label>Tipo</label>
+        <input type="text"
+               value="FIN"
+               disabled>
+      </div>
+
+      <div>
+        <label>Temp. Ambiente</label>
+        <input type="number"
+               [(ngModel)]="formFinal.temperatura_ambiente">
+      </div>
+
     </div>
 
-    <!-- FORMULARIO FIN -->
-    <div *ngIf="mostrarFormulario" class="form-box">
+    <div class="modal-actions">
+      <button class="btn-secondary"
+              (click)="cerrarModal()">
+        Cancelar
+      </button>
 
-      <h4>Finalizar Secado</h4>
-
-      <div class="form-grid">
-
-        <div>
-          <label>Fecha</label>
-          <input type="date"
-                 [(ngModel)]="nuevoEvento.fecha"
-                 name="fecha">
-        </div>
-
-        <div>
-          <label>Hora</label>
-          <input type="time"
-                 [(ngModel)]="nuevoEvento.hora"
-                 name="hora">
-        </div>
-
-        <div>
-          <label>Temp. Ambiente</label>
-          <input type="number"
-                 [(ngModel)]="nuevoEvento.temperatura_ambiente"
-                 name="temp">
-        </div>
-
-      </div>
-
-      <div class="form-actions">
-        <button class="btn-secondary"
-                (click)="mostrarFormulario = false">
-          Cancelar
-        </button>
-
-        <button class="btn-primary"
-                (click)="guardarEvento()">
-          Guardar
-        </button>
-      </div>
-
+      <button class="btn-danger"
+              (click)="finalizarSecado()">
+        Confirmar
+      </button>
     </div>
 
   </div>
 
+</div>
+
+<!-- MENSAJE -->
+
+<div *ngIf="mostrarMensaje"
+     class="toast"
+     [ngClass]="{
+       'toast-success': tipoMensaje === 'success',
+       'toast-error': tipoMensaje === 'error'
+     }">
+  {{ mensaje }}
 </div>
