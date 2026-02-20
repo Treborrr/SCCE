@@ -10,7 +10,10 @@ export const routes: Routes = [
     component: LayoutComponent,
     children: [
       { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
-      { path: 'lotes', loadComponent: () => import('./pages/lotes/lotes').then(m => m.Lotes) }
+      { path: 'lotes', loadComponent: () => import('./pages/lotes/lotes').then(m => m.Lotes) },
+      { path: 'fermentacion', loadComponent: () => import('./pages/fermentacion/fermentacion').then(m => m.Fermentacion) },
+      { path: 'secado', loadComponent: () => import('./pages/secado/secado').then(m => m.Secado) }
+
     ]
   },
   { path: '**', redirectTo: 'login' }

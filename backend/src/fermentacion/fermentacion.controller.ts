@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Param,
   Body,
@@ -16,6 +17,16 @@ import { Roles } from '../auth/roles.decorator';
 @Controller('fermentacion')
 export class FermentacionController {
   constructor(private readonly fermentacionService: FermentacionService) {}
+  
+  @Get('lotes')
+  getLotesFermentacion() {
+    return this.fermentacionService.getLotesFermentacion();
+  }
+  @Get(':loteId/eventos')
+  getEventos(@Param('loteId') loteId: string) {
+    return this.fermentacionService.getEventos(loteId);
+  }
+
 
   @Post(':loteId/evento')
   async crearEvento(

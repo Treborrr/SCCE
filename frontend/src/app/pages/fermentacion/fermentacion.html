@@ -1,0 +1,250 @@
+<div class="page">
+
+  <h2>Fermentación</h2>
+
+  <!-- LOADING -->
+  <div *ngIf="cargando" class="loading">
+    Cargando lotes...
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="!cargando && lotes.length === 0" class="empty">
+    No hay lotes en fermentación
+  </div>
+
+  <!-- TABLA PRINCIPAL -->
+  <table *ngIf="!cargando && lotes.length > 0" class="tabla">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Fecha Compra</th>
+        <th>Proveedor</th>
+        <th>Estado</th>
+        <th>Último Evento</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let lote of lotes">
+        <td>{{ lote.codigo }}</td>
+        <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+        <td>{{ lote.proveedor_nombre }}</td>
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'badge-ready': lote.estado === 'LISTO_PARA_FERMENTACION',
+              'badge-active': lote.estado === 'FERMENTACION'
+            }">
+            {{ lote.estado }}
+          </span>
+        </td>
+        <td>
+          {{ lote.ultimo_evento || 'Sin eventos' }}
+        </td>
+        <td>
+          <button class="btn-primary"
+                  (click)="abrirPanel(lote)">
+            Registrar Evento
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+
+<!-- OVERLAY PANEL -->
+<div class="overlay" *ngIf="mostrarPanel && loteSeleccionado">
+
+  <div class="panel">
+
+    <button class="cerrar" (click)="cerrarPanel()">✕</button>
+
+    <!-- HEADER PANEL -->
+    <div class="panel-header">
+      <h3>
+        Fermentación - {{ loteSeleccionado.codigo }}
+      </h3>
+
+      <button class="btn-primary"
+              (click)="mostrarFormulario = !mostrarFormulario">
+        + Nuevo Evento
+      </button>
+    </div>
+
+    <!-- TABLA DE EVENTOS -->
+    <table class="tabla-eventos" *ngIf="eventos.length > 0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Tipo</th>
+          <th>Cajón</th>
+          <th>°Brix</th>
+          <th>pH Pepa</th>
+          <th>pH Pulpa</th>
+          <th>Temp Int.</th>
+          <th>Prueba Corte</th>
+          <th>Temp Amb.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of eventos; let i = index">
+          <td>{{ e.fecha | date:'dd/MM/yyyy' }}</td>
+          <td>{{ e.hora || '-' }}</td>
+          <td>
+            <ng-container *ngIf="e.tipo === 'REMOCION'; else normalTipo">
+                {{ contarRemocionActual(i) }}° REMOCIÓN
+            </ng-container>
+
+            <ng-template #normalTipo>
+                {{ e.tipo }}
+            </ng-template>
+        </td>
+          <td>{{ e.cajon || '-' }}</td>
+          <td>{{ e.brix || '-' }}</td>
+          <td>{{ e.ph_pepa || '-' }}</td>
+          <td>{{ e.ph_pulpa || '-' }}</td>
+          <td>{{ e.temperatura_interna || '-' }}</td>
+          <td>{{ e.prueba_corte ? 'SI' : 'NO' }}</td>
+          <td>{{ e.temperatura_ambiente || '-' }}</td>
+          
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- SIN EVENTOS -->
+    <div *ngIf="eventos.length === 0" class="empty">
+      Este lote aún no tiene eventos registrados.
+    </div>
+
+    <div *ngIf="mostrarMensaje"
+        class="toast"
+        [ngClass]="{
+        'toast-success': tipoMensaje === 'success',
+        'toast-error': tipoMensaje === 'error'
+        }">
+        {{ mensaje }}
+    </div>
+
+    <!-- FORMULARIO NUEVO EVENTO -->
+    <div *ngIf="mostrarFormulario" class="formulario-evento">
+
+        <h4>Registrar Evento</h4>
+
+        <div class="form-grid">
+
+            <!-- TIPO -->
+            <div>
+            <label>Tipo</label>
+            <select [(ngModel)]="nuevoEvento.tipo" name="tipo">
+                <option value="INICIO">INICIO</option>
+                <option value="REMOCION">REMOCIÓN</option>
+                <option value="CONTROL">CONTROL</option>
+                <option value="FINAL">FINAL</option>
+            </select>
+            </div>
+
+            <!-- FECHA -->
+            <div>
+            <label>Fecha</label>
+            <input type="date"
+                    [(ngModel)]="nuevoEvento.fecha"
+                    name="fecha">
+            </div>
+
+            <!-- HORA -->
+            <div>
+            <label>Hora</label>
+            <input type="time"
+                    [(ngModel)]="nuevoEvento.hora"
+                    name="hora">
+            </div>
+
+            <!-- CAJONES -->
+            <div>
+            <label>Cajones</label>
+            <input type="text"
+                    placeholder="Ej: 15,16,17"
+                    [(ngModel)]="nuevoEvento.cajon"
+                    name="cajon">
+            </div>
+
+            <!-- BRIX -->
+            <div>
+            <label>°Brix</label>
+            <input type="number"
+                    [(ngModel)]="nuevoEvento.brix"
+                    name="brix">
+            </div>
+
+            <!-- pH PEPA -->
+            <div>
+            <label>pH Pepa</label>
+            <input type="number"
+                    [(ngModel)]="nuevoEvento.ph_pepa"
+                    name="ph_pepa">
+            </div>
+
+            <!-- pH PULPA -->
+            <div>
+            <label>pH Pulpa</label>
+            <input type="number"
+                    [(ngModel)]="nuevoEvento.ph_pulpa"
+                    name="ph_pulpa">
+            </div>
+
+            <!-- TEMP INTERNA -->
+            <div>
+            <label>Temp Interna</label>
+            <input type="number"
+                    [(ngModel)]="nuevoEvento.temperatura_interna"
+                    name="temp_int">
+            </div>
+
+            <!-- TEMP AMBIENTE -->
+            <div>
+            <label>Temp Ambiente</label>
+            <input type="number"
+                    [(ngModel)]="nuevoEvento.temperatura_ambiente"
+                    name="temp_amb">
+            </div>
+
+            <!-- PRUEBA DE CORTE -->
+            <div class="checkbox">
+            <label>
+                <input type="checkbox"
+                    [(ngModel)]="nuevoEvento.prueba_corte"
+                    name="corte">
+                Prueba de Corte
+            </label>
+            </div>
+
+            <!-- SUBIR FOTO -->
+            <div *ngIf="nuevoEvento.prueba_corte">
+            <label>Subir Foto</label>
+            <input type="file"
+                    (change)="onFileSelected($event)">
+            </div>
+
+        </div>
+
+        <div class="acciones">
+            <button class="btn-secondary"
+                    (click)="mostrarFormulario = false">
+            Cancelar
+            </button>
+
+            <button class="btn-primary"
+                    (click)="guardarEvento()">
+            Guardar Evento
+            </button>
+        </div>
+
+    </div>
+
+
+  </div>
+
+</div>

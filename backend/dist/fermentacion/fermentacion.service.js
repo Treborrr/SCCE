@@ -20,6 +20,47 @@ let FermentacionService = class FermentacionService {
     constructor(pool) {
         this.pool = pool;
     }
+    async getLotesFermentacion() {
+        const result = await this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        (
+          SELECT fe.tipo
+          FROM fermentacion_eventos fe
+          WHERE fe.lote_id = l.id
+          ORDER BY fe.created_at DESC
+          LIMIT 1
+        ) AS ultimo_evento
+      FROM lotes l
+      WHERE l.estado IN ('LISTO_PARA_FERMENTACION', 'FERMENTACION')
+      ORDER BY l.created_at DESC
+    `);
+        return result.rows;
+    }
+    async getEventos(loteId) {
+        const result = await this.pool.query(`
+      SELECT 
+        fecha,
+        hora,
+        tipo,
+        cajon,
+        brix,
+        ph_pepa,
+        ph_pulpa,
+        temperatura_interna,
+        temperatura_ambiente,
+        es_remocion,
+        prueba_corte
+      FROM fermentacion_eventos
+      WHERE lote_id = $1
+      ORDER BY fecha, hora
+    `, [loteId]);
+        return result.rows;
+    }
     async registrarEvento(loteId, dto, userId) {
         const tipo = dto.tipo;
         const inicioExistente = await this.pool.query(`SELECT id FROM fermentacion_eventos
@@ -127,8 +168,8 @@ let FermentacionService = class FermentacionService {
                 throw new Error('Lote no existe');
             }
             if (data.tipo === 'INICIO') {
-                if (lote.estado !== 'INGRESADO') {
-                    throw new Error('Solo lotes INGRESADO pueden iniciar fermentación');
+                if (data.tipo === 'INICIO' && lote.estado !== 'LISTO_PARA_FERMENTACION') {
+                    throw new Error('Solo lotes LISTO_PARA_FERMENTACION pueden iniciar fermentación');
                 }
             }
             else {
@@ -187,12 +228,14 @@ let FermentacionService = class FermentacionService {
                 await client.query(`
           INSERT INTO secados (
             lote_id,
+            tipo,
             fecha_inicio,
             hora_inicio,
+            temperatura_ambiente,
             created_by
           )
-          VALUES ($1,$2,$3,$4)
-          `, [loteId, data.fecha, data.hora, userId]);
+          VALUES ($1,'INICIO',$3,$4,$5,$6)
+          `, [loteId, userId]);
             }
             await client.query('COMMIT');
             return {

@@ -4,6 +4,51 @@ import { Pool } from 'pg';
 @Injectable()
 export class FermentacionService {
   constructor(@Inject('PG_POOL') private pool: Pool) {}
+
+  async getLotesFermentacion() {
+    const result = await this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.fecha_compra,
+        l.estado,
+        l.proveedor_nombre,
+        (
+          SELECT fe.tipo
+          FROM fermentacion_eventos fe
+          WHERE fe.lote_id = l.id
+          ORDER BY fe.created_at DESC
+          LIMIT 1
+        ) AS ultimo_evento
+      FROM lotes l
+      WHERE l.estado IN ('LISTO_PARA_FERMENTACION', 'FERMENTACION')
+      ORDER BY l.created_at DESC
+    `);
+
+    return result.rows;
+  }
+  async getEventos(loteId: string) {
+    const result = await this.pool.query(`
+      SELECT 
+        fecha,
+        hora,
+        tipo,
+        cajon,
+        brix,
+        ph_pepa,
+        ph_pulpa,
+        temperatura_interna,
+        temperatura_ambiente,
+        es_remocion,
+        prueba_corte
+      FROM fermentacion_eventos
+      WHERE lote_id = $1
+      ORDER BY fecha, hora
+    `, [loteId]);
+
+    return result.rows;
+  }
+
   async registrarEvento(loteId: string, dto: any, userId: string) {
     const tipo = dto.tipo; 
 
@@ -190,8 +235,8 @@ export class FermentacionService {
       // 🔒 VALIDACIONES DE ESTADO
 
       if (data.tipo === 'INICIO') {
-        if (lote.estado !== 'INGRESADO') {
-          throw new Error('Solo lotes INGRESADO pueden iniciar fermentación');
+        if (data.tipo === 'INICIO' && lote.estado !== 'LISTO_PARA_FERMENTACION') {
+          throw new Error('Solo lotes LISTO_PARA_FERMENTACION pueden iniciar fermentación');
         }
       } else {
         if (lote.estado !== 'FERMENTACION') {
@@ -275,13 +320,15 @@ export class FermentacionService {
           `
           INSERT INTO secados (
             lote_id,
+            tipo,
             fecha_inicio,
             hora_inicio,
+            temperatura_ambiente,
             created_by
           )
-          VALUES ($1,$2,$3,$4)
+          VALUES ($1,'INICIO',$3,$4,$5,$6)
           `,
-          [loteId, data.fecha, data.hora, userId],
+          [loteId, userId],
         );
       }
 

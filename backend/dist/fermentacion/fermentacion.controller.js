@@ -23,11 +23,30 @@ let FermentacionController = class FermentacionController {
     constructor(fermentacionService) {
         this.fermentacionService = fermentacionService;
     }
+    getLotesFermentacion() {
+        return this.fermentacionService.getLotesFermentacion();
+    }
+    getEventos(loteId) {
+        return this.fermentacionService.getEventos(loteId);
+    }
     async crearEvento(loteId, body, req) {
         return this.fermentacionService.crearEvento(loteId, body, req.user.id);
     }
 };
 exports.FermentacionController = FermentacionController;
+__decorate([
+    (0, common_1.Get)('lotes'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], FermentacionController.prototype, "getLotesFermentacion", null);
+__decorate([
+    (0, common_1.Get)(':loteId/eventos'),
+    __param(0, (0, common_1.Param)('loteId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], FermentacionController.prototype, "getEventos", null);
 __decorate([
     (0, common_1.Post)(':loteId/evento'),
     __param(0, (0, common_1.Param)('loteId')),

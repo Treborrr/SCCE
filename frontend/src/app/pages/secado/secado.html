@@ -1,0 +1,126 @@
+<div class="page">
+
+  <h2>Secado</h2>
+
+  <div *ngIf="cargando" class="loading">
+    Cargando lotes...
+  </div>
+
+  <div *ngIf="!cargando && lotes.length === 0" class="empty">
+    No hay lotes en secado
+  </div>
+
+  <table *ngIf="!cargando && lotes.length > 0" class="tabla">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Fecha Compra</th>
+        <th>Proveedor</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let lote of lotes">
+        <td>{{ lote.codigo }}</td>
+        <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+        <td>{{ lote.nombre_proveedor }}</td>
+        <td>{{ lote.estado }}</td>
+        <td>
+          <button class="btn-primary"
+                  (click)="abrirPanel(lote)">
+            Ver Secado
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+
+<div class="overlay" *ngIf="mostrarPanel && loteSeleccionado">
+
+  <div class="panel">
+
+    <button class="cerrar" (click)="cerrarPanel()">X</button>
+
+    <h3>
+      Secado - {{ loteSeleccionado.codigo }}
+    </h3>
+
+    <button class="btn-primary"
+            (click)="mostrarFormulario = true">
+      Finalizar Secado
+    </button>
+
+    <table class="tabla-eventos" *ngIf="eventos.length > 0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Tipo</th>
+          <th>Temp. Ambiente</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of eventos">
+          <td>{{ e.fecha | date:'dd/MM/yyyy' }}</td>
+          <td>{{ e.hora }}</td>
+          <td>{{ e.tipo }}</td>
+          <td>{{ e.temperatura_ambiente || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="eventos.length === 0" class="empty">
+      No hay registros de secado.
+    </div>
+
+    <!-- FORMULARIO FIN -->
+    <div *ngIf="mostrarFormulario" class="form-box">
+
+      <h4>Finalizar Secado</h4>
+
+      <div class="form-grid">
+
+        <div>
+          <label>Fecha</label>
+          <input type="date"
+                 [(ngModel)]="nuevoEvento.fecha"
+                 name="fecha">
+        </div>
+
+        <div>
+          <label>Hora</label>
+          <input type="time"
+                 [(ngModel)]="nuevoEvento.hora"
+                 name="hora">
+        </div>
+
+        <div>
+          <label>Temp. Ambiente</label>
+          <input type="number"
+                 [(ngModel)]="nuevoEvento.temperatura_ambiente"
+                 name="temp">
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-secondary"
+                (click)="mostrarFormulario = false">
+          Cancelar
+        </button>
+
+        <button class="btn-primary"
+                (click)="guardarEvento()">
+          Guardar
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
