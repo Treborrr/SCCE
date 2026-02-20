@@ -6,6 +6,7 @@ export declare class LotesService {
     create(dto: CreateLoteDto, userId: string): Promise<any>;
     findAll(): Promise<any[]>;
     findOne(id: string): Promise<any>;
+    marcarListoFermentacion(id: string): Promise<any>;
     remove(id: string): Promise<{
         message: string;
     }>;

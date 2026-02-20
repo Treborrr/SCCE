@@ -22,36 +22,47 @@ let LotesService = class LotesService {
         this.pool = pool;
     }
     async create(dto, userId) {
-        const existe = await this.pool.query(`SELECT id FROM lotes WHERE codigo = $1`, [dto.codigo]);
-        if (existe.rows.length > 0) {
-            throw new common_1.BadRequestException('Ya existe un lote con ese código');
+        try {
+            const result = await this.pool.query(`
+        INSERT INTO lotes (
+          codigo,
+          fecha_compra,
+          proveedor_nombre,
+          kg_baba_compra,
+          kg_segunda,
+          estado,
+          stock_actual,
+          created_by
+        )
+        VALUES ($1, $2, $3, $4, $5, 'INGRESADO', 0, $6)
+        RETURNING *
+        `, [
+                dto.codigo,
+                dto.fecha_compra,
+                dto.proveedor_nombre,
+                dto.kg_baba_compra,
+                dto.kg_segunda ?? 0,
+                userId
+            ]);
+            return result.rows[0];
         }
+        catch (error) {
+            if (error instanceof Object && 'code' in error && error.code === '23505') {
+                throw new common_1.BadRequestException('Ya existe un lote con ese código');
+            }
+            throw error;
+        }
+    }
+    async findAll() {
         const result = await this.pool.query(`
-      INSERT INTO lotes (
+      SELECT 
+        id,
         codigo,
         fecha_compra,
         proveedor_nombre,
         kg_baba_compra,
         kg_segunda,
-        estado,
-        stock_actual,
-        created_by
-      )
-      VALUES ($1, $2, $3, $4, $5, 'INGRESADO', 0, $6)
-      RETURNING *
-      `, [
-            dto.codigo,
-            dto.fecha_compra,
-            dto.proveedor_nombre,
-            dto.kg_baba_compra,
-            dto.kg_segunda ?? 0,
-            userId
-        ]);
-        return result.rows[0];
-    }
-    async findAll() {
-        const result = await this.pool.query(`
-      SELECT *
+        estado
       FROM lotes
       ORDER BY created_at DESC
     `);
@@ -61,6 +72,18 @@ let LotesService = class LotesService {
         const result = await this.pool.query(`SELECT * FROM lotes WHERE id = $1`, [id]);
         if (result.rows.length === 0) {
             throw new common_1.BadRequestException('Lote no encontrado');
+        }
+        return result.rows[0];
+    }
+    async marcarListoFermentacion(id) {
+        const result = await this.pool.query(`
+      UPDATE lotes
+      SET estado = 'LISTO_PARA_FERMENTACION'
+      WHERE id = $1
+      RETURNING *
+      `, [id]);
+        if (result.rows.length === 0) {
+            throw new Error('Lote no encontrado');
         }
         return result.rows[0];
     }

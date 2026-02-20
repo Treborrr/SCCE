@@ -19,6 +19,7 @@ const create_lote_dto_1 = require("./dto/create-lote.dto");
 const roles_guard_1 = require("../auth/roles.guard");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
+const common_2 = require("@nestjs/common");
 let LotesController = class LotesController {
     lotesService;
     constructor(lotesService) {
@@ -29,6 +30,9 @@ let LotesController = class LotesController {
     }
     create(dto, req) {
         return this.lotesService.create(dto, req.user.userId);
+    }
+    marcarListoFermentacion(id) {
+        return this.lotesService.marcarListoFermentacion(id);
     }
 };
 exports.LotesController = LotesController;
@@ -41,13 +45,20 @@ __decorate([
 ], LotesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_lote_dto_1.CreateLoteDto, Object]),
     __metadata("design:returntype", void 0)
 ], LotesController.prototype, "create", null);
+__decorate([
+    (0, common_2.Patch)(':id/listo-fermentacion'),
+    (0, roles_decorator_1.Roles)('ADMIN'),
+    __param(0, (0, common_2.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], LotesController.prototype, "marcarListoFermentacion", null);
 exports.LotesController = LotesController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('lotes'),

@@ -1,69 +1,87 @@
-<div class="page-header">
-  <h2>Lotes</h2>
-  <button (click)="abrirNuevo()">+ Nuevo Lote</button>
-</div>
+<div class="lotes-container">
 
-<div class="card">
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Fecha</th>
-        <th>Kg Baba</th>
-        <th>Estado</th>
-        <th>Stock</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let lote of lotes">
-        <td>{{ lote.codigo }}</td>
-        <td>{{ lote.fecha_compra | date }}</td>
-        <td>{{ lote.kg_baba_compra }}</td>
-        <td>
-          <span class="badge" [ngClass]="lote.estado.toLowerCase()">
-            {{ lote.estado }}
-          </span>
-        </td>
-        <td>{{ lote.stock_actual }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="header">
+    <h2>Lotes</h2>
+    <button class="btn-primary" (click)="abrirModal()">+ Nuevo Lote</button>
+  </div>
+
+  <div class="alert-success" *ngIf="mensajeExito">
+    {{ mensajeExito }}
+  </div>
+
+  <div class="tabla-wrapper" *ngIf="lotes.length > 0; else emptyState">
+
+    <table class="tabla-lotes">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha Compra</th>
+          <th>Proveedor</th>
+          <th>Kg Baba</th>
+          <th>Kg Segunda</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lote of lotes">
+          <td>{{ lote.codigo }}</td>
+          <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+          <td>{{ lote.proveedor_nombre }}</td>
+          <td>{{ lote.kg_baba_compra }}</td>
+          <td>{{ lote.kg_segunda }}</td>
+          <td>
+            <span class="badge" [ngClass]="lote.estado">
+              {{ lote.estado }}
+            </span>
+          </td>
+          <td>
+            <button 
+              class="btn-secondary"
+              *ngIf="lote.estado === 'INGRESADO'"
+              (click)="pasarAFermentacion(lote.id)">
+              Listo para Fermentación
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty">
+      No hay lotes registrados.
+    </div>
+  </ng-template>
+
 </div>
 
 <!-- MODAL -->
+
 <div class="modal-backdrop" *ngIf="mostrarModal">
   <div class="modal">
 
     <h3>Registrar Nuevo Lote</h3>
 
-    <div class="form-group">
-      <label>Código</label>
-      <input type="text" [(ngModel)]="nuevoLote.codigo">
-    </div>
+    <label>Código</label>
+    <input type="text" [(ngModel)]="nuevoLote.codigo">
 
-    <div class="form-group">
-      <label>Fecha de Compra</label>
-      <input type="date" [(ngModel)]="nuevoLote.fecha_compra">
-    </div>
+    <label>Fecha de Compra</label>
+    <input type="date" [(ngModel)]="nuevoLote.fecha_compra">
 
-    <div class="form-group">
-      <label>Nombre del Proveedor</label>
-      <input type="text" [(ngModel)]="nuevoLote.nombre_proveedor">
-    </div>
+    <label>Proveedor</label>
+    <input type="text" [(ngModel)]="nuevoLote.proveedor">
 
-    <div class="form-group">
-      <label>Kg Baba Compra</label>
-      <input type="number" [(ngModel)]="nuevoLote.kg_baba_compra">
-    </div>
+    <label>Kg Baba Compra</label>
+    <input type="number" [(ngModel)]="nuevoLote.kg_baba_compra">
 
-    <div class="form-group">
-      <label>Kg Segunda</label>
-      <input type="number" [(ngModel)]="nuevoLote.kg_segunda">
-    </div>
+    <label>Kg Segunda</label>
+    <input type="number" [(ngModel)]="nuevoLote.kg_segunda">
 
     <div class="modal-actions">
-      <button class="cancel" (click)="cerrarModal()">Cancelar</button>
-      <button class="save" (click)="guardar()">Guardar</button>
+      <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" (click)="guardar()">Guardar</button>
     </div>
 
   </div>

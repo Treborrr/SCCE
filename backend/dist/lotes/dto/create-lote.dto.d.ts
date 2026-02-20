@@ -3,5 +3,5 @@ export declare class CreateLoteDto {
     fecha_compra: string;
     proveedor_nombre: string;
     kg_baba_compra: number;
-    kg_segunda: number;
+    kg_segunda?: number;
 }

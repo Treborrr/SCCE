@@ -5,4 +5,5 @@ export declare class LotesController {
     constructor(lotesService: LotesService);
     findAll(): Promise<any[]>;
     create(dto: CreateLoteDto, req: any): Promise<any>;
+    marcarListoFermentacion(id: string): Promise<any>;
 }
