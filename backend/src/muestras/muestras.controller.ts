@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { MuestrasService } from './muestras.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -71,7 +71,7 @@ export class MuestrasController {
     storage: diskStorage({
       destination: './uploads',
       filename: (_req, file, cb) => {
-        const uniqueName = `muestra-${uuidv4()}${extname(file.originalname)}`;
+        const uniqueName = `muestra-${randomUUID()}${extname(file.originalname)}`;
         cb(null, uniqueName);
       },
     }),

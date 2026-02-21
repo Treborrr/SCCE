@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CataService = void 0;
 const common_1 = require("@nestjs/common");
 const pg_1 = require("pg");
-const uuid_1 = require("uuid");
+const crypto_1 = require("crypto");
 let CataService = class CataService {
     pool;
     constructor(pool) {
@@ -68,7 +68,7 @@ let CataService = class CataService {
             const tokens = [];
             const links = [];
             for (let i = 0; i < data.total_catadores; i++) {
-                const token = (0, uuid_1.v4)();
+                const token = (0, crypto_1.randomUUID)();
                 tokens.push(token);
                 await client.query(`INSERT INTO cata_invitaciones (cata_id, token) VALUES ($1,$2)`, [cataId, token]);
                 links.push({

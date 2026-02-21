@@ -1,6 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CataService {
@@ -71,7 +71,7 @@ export class CataService {
       const links: any[] = [];
 
       for (let i = 0; i < data.total_catadores; i++) {
-        const token = uuidv4();
+        const token = randomUUID();
         tokens.push(token);
 
         await client.query(
