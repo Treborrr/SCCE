@@ -4,11 +4,9 @@ export declare class FermentacionService {
     constructor(pool: Pool);
     getLotesFermentacion(): Promise<any[]>;
     getEventos(loteId: string): Promise<any[]>;
-    registrarEvento(loteId: string, dto: any, userId: string): Promise<{
-        message: string;
-    }>;
     crearEvento(loteId: string, data: any, userId: string): Promise<{
         message: string;
         numeroRemocion: number | null;
     }>;
+    actualizarFotoEvento(eventoId: string, fotoUrl: string, descripcion?: string): Promise<any>;
 }

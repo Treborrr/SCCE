@@ -1,0 +1,334 @@
+.cata-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.cata-container {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* HEADER */
+.cata-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.cata-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 6px 0;
+}
+
+.cata-subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.cata-subtitle strong {
+    color: #60a5fa;
+}
+
+/* SECTIONS */
+.section {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
+}
+
+/* FORM */
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.form-group input {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.form-group input::placeholder {
+    color: #475569;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* LEYENDA */
+.leyenda {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.leyenda-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.leyenda-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+}
+
+.leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.leyenda-valor {
+    background: #334155;
+    color: #93c5fd;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.leyenda-desc {
+    color: #cbd5e1;
+}
+
+/* RADAR */
+.radar-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.radar-canvas {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    max-width: 100%;
+}
+
+/* ATRIBUTOS */
+.atributos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.atributo-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 40px 90px;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.attr-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.attr-slider-container {
+    display: flex;
+    align-items: center;
+}
+
+.attr-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #334155;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.attr-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--slider-color, #3b82f6);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.attr-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--slider-color, #3b82f6);
+    cursor: pointer;
+    border: 2px solid white;
+}
+
+.attr-value {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    transition: background 0.2s;
+}
+
+.attr-intensidad {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* SUBMIT */
+.submit-section {
+    display: flex;
+    justify-content: center;
+    margin: 24px 0 40px 0;
+}
+
+.btn-enviar {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    border: none;
+    padding: 14px 48px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-enviar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.4);
+}
+
+/* SUCCESS / ERROR / LOADING */
+.cata-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #334155;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.cata-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 500px;
+    margin: 40px auto;
+    font-size: 14px;
+}
+
+.cata-success {
+    text-align: center;
+    padding: 80px 20px;
+    color: white;
+}
+
+.success-icon {
+    font-size: 60px;
+    margin-bottom: 16px;
+}
+
+.cata-success h2 {
+    margin: 0 0 8px 0;
+    font-weight: 700;
+}
+
+.cata-success p {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+    .form-row-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .atributo-row {
+        grid-template-columns: 100px 1fr 36px;
+        gap: 6px;
+    }
+
+    .attr-intensidad {
+        display: none;
+    }
+
+    .radar-canvas {
+        width: 320px;
+        height: 320px;
+    }
+}

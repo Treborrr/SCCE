@@ -21,7 +21,7 @@ export class Lotes implements OnInit {
   nuevoLote = {
     codigo: '',
     fecha_compra: '',
-    proveedor: '',
+    proveedor_nombre: '',
     kg_baba_compra: 0,
     kg_segunda: 0
   };
@@ -29,7 +29,7 @@ export class Lotes implements OnInit {
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.cargarLotes();
@@ -38,14 +38,14 @@ export class Lotes implements OnInit {
       this.cargarLotes();
     }, 500);
   }
-  
+
   cargarLotes() {
     this.http.get<any[]>('http://localhost:3000/lotes')
       .subscribe(data => {
         console.log('LOTE DATA:', data);
-        this.lotes = [...data]; 
-
-        this.cdr.detectChanges(); // recarga el componente para mostrar los datos actualizados
+        // Solo mostrar lotes recién ingresados (listos para fermentación)
+        this.lotes = data.filter(l => l.estado === 'LISTO_PARA_FERMENTACION');
+        this.cdr.detectChanges();
       });
   }
 
@@ -68,7 +68,7 @@ export class Lotes implements OnInit {
           this.nuevoLote = {
             codigo: '',
             fecha_compra: '',
-            proveedor: '',
+            proveedor_nombre: '',
             kg_baba_compra: 0,
             kg_segunda: 0
           };
@@ -82,14 +82,6 @@ export class Lotes implements OnInit {
           alert('Error al crear lote');
         }
       });
-  }
-
-  pasarAFermentacion(id: string) {
-    this.http.patch(`http://localhost:3000/lotes/${id}/listo-fermentacion`, {
-      estado: 'LISTO_PARA_FERMENTACION'
-    }).subscribe(() => {
-      this.cargarLotes();
-    });
   }
 
 }

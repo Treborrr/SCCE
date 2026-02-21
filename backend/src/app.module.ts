@@ -13,17 +13,18 @@ import { MuestrasModule } from './muestras/muestras.module';
 import { AnalisisModule } from './analisis/analisis.module';
 import { CataModule } from './cata/cata.module';
 import { LotesDerivadosModule } from './lotes-derivados/lotes-derivados.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
-    DatabaseModule, 
+    DatabaseModule,
     LotesModule,
     UsuariosModule,
-    AuthModule, 
+    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
-    }), FermentacionModule, SecadoModule, AlmacenModule, MuestrasModule, AnalisisModule, CataModule, LotesDerivadosModule],
+    }), FermentacionModule, SecadoModule, AlmacenModule, MuestrasModule, AnalisisModule, CataModule, LotesDerivadosModule, DashboardModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

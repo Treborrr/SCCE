@@ -7,13 +7,15 @@ h2 {
   font-weight: 600;
 }
 
+/* ===== TABLA PRINCIPAL ===== */
+
 .tabla {
   width: 100%;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
 .tabla th {
@@ -29,6 +31,8 @@ h2 {
   border-top: 1px solid #eee;
   font-size: 14px;
 }
+
+/* ===== BADGES ===== */
 
 .badge {
   padding: 5px 10px;
@@ -47,43 +51,81 @@ h2 {
   color: #e65100;
 }
 
+.badge-si {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-no {
+  color: #999;
+  font-size: 12px;
+}
+
+/* ===== BOTONES ===== */
+
 .btn-primary {
   background: #1976d2;
   color: white;
   border: none;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .btn-primary:hover {
   background: #0d47a1;
 }
 
-.loading, .empty {
+.btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.btn-secondary:hover {
+  background: #bdbdbd;
+}
+
+.loading,
+.empty {
   padding: 20px;
   text-align: center;
   color: #666;
 }
 
+/* ===== OVERLAY / PANEL ===== */
+
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 100;
 }
 
 .panel {
   background: white;
-  width: 90%;
+  width: 92%;
+  max-width: 1100px;
   max-height: 85vh;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px 28px;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   position: relative;
 }
 
@@ -95,65 +137,27 @@ h2 {
   background: none;
   font-size: 18px;
   cursor: pointer;
+  color: #666;
 }
 
-.tabla-eventos {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
+.cerrar:hover {
+  color: #333;
 }
 
-.tabla-eventos th,
-.tabla-eventos td {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-  font-size: 13px;
-}
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
 }
 
-.formulario-evento {
-  margin-top: 25px;
-  padding: 20px;
-  background: #f8f9fb;
-  border-radius: 12px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-}
-
-.form-grid input,
-.form-grid select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.checkbox {
-  display: flex;
-  align-items: center;
-}
-
-.acciones {
-  margin-top: 15px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
 /* ===== TABLA EVENTOS ===== */
 
 .tabla-eventos {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  font-size: 14px;
+  margin-top: 12px;
+  font-size: 13px;
 }
 
 .tabla-eventos thead {
@@ -162,59 +166,44 @@ h2 {
 
 .tabla-eventos th {
   text-align: left;
-  padding: 12px;
+  padding: 10px 12px;
   font-weight: 600;
   color: #444;
   border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .tabla-eventos td {
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
 }
 
 .tabla-eventos tbody tr:hover {
   background: #fafafa;
 }
 
-.text-right {
-  text-align: right;
-}
-
-/* ===== BADGES ===== */
-
-.badge-evento {
-  padding: 4px 10px;
-  border-radius: 6px;
+.link-foto {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
   font-size: 12px;
-  font-weight: 600;
 }
 
-.inicio {
-  background: #e3f2fd;
-  color: #1565c0;
+.link-foto:hover {
+  text-decoration: underline;
 }
 
-.remocion {
-  background: #fff3e0;
-  color: #ef6c00;
-}
+/* ===== TOAST / MENSAJES ===== */
 
-.control {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.final {
-  background: #fce4ec;
-  color: #c2185b;
-}
 .toast {
   padding: 12px 18px;
   border-radius: 8px;
   margin-bottom: 15px;
   font-weight: 600;
   font-size: 14px;
+  animation: fadeIn 0.3s ease;
 }
 
 .toast-success {
@@ -227,4 +216,244 @@ h2 {
   background: #ffebee;
   color: #c62828;
   border: 1px solid #ffcdd2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== FORMULARIO EVENTO ===== */
+
+.formulario-evento {
+  margin-top: 20px;
+  padding: 20px 24px;
+  background: #f8f9fb;
+  border-radius: 12px;
+  border: 1px solid #e8eaf0;
+}
+
+.formulario-evento h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+/* Grupo de campo con label */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
+  font-size: 13px;
+  background: white;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+.form-group input::placeholder {
+  color: #aab;
+  font-size: 12px;
+}
+
+/* Checkbox grupo */
+.checkbox-group {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  color: #333 !important;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* File input */
+.file-input {
+  font-size: 12px !important;
+  padding: 6px !important;
+}
+
+/* Foto preview */
+.foto-preview {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.btn-remove-foto {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: 0.2s;
+}
+
+.btn-remove-foto:hover {
+  background: #ffcdd2;
+}
+
+/* Acciones */
+.acciones {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* BOTÓN AGREGAR FOTO EN TABLA */
+.btn-add-foto {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.btn-add-foto:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* MINI FORM FOTO */
+.mini-foto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.file-input-mini {
+  font-size: 11px;
+  width: 100%;
+}
+
+.input-desc-mini {
+  padding: 4px 8px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.input-desc-mini:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.mini-foto-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-mini-save {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-mini-save:hover {
+  background: #16a34a;
+}
+
+.btn-mini-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-mini-cancel {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.btn-mini-cancel:hover {
+  background: #d1d5db;
 }

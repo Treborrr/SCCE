@@ -1,6 +1,219 @@
-<h2>Dashboard</h2>
+<div class="dashboard">
 
-<div class="card">
-  <h3>Stock Total</h3>
-  <p>0 kg</p>
+  <!-- LOADING -->
+  <div *ngIf="cargando" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando estadísticas...</p>
+  </div>
+
+  <div *ngIf="!cargando && stats">
+
+    <!-- HEADER -->
+    <div class="dash-header">
+      <div>
+        <h1>Panel de Control</h1>
+        <p class="dash-subtitle">Sistema de Control y Calidad del Cacao</p>
+      </div>
+      <div class="dash-date">{{ 'Hoy' }} · Trazabilidad en tiempo real</div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis-grid">
+
+      <div class="kpi-card kpi-stock">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.stock_almacen_kg | number:'1.1-1' }} kg</div>
+          <div class="kpi-label">Stock en Almacén</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-lotes">
+        <div class="kpi-icon">🏷️</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.total_lotes }}</div>
+          <div class="kpi-label">Lotes Totales</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-muestras">
+        <div class="kpi-icon">🔬</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.total_muestras }}</div>
+          <div class="kpi-label">Muestras</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-analisis">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.total_analisis }}</div>
+          <div class="kpi-label">Análisis Físicos</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-catas">
+        <div class="kpi-icon">🍫</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.total_catas }}</div>
+          <div class="kpi-label">Sesiones de Cata</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-derivados">
+        <div class="kpi-icon">🔀</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.stock_derivados_kg | number:'1.1-1' }} kg</div>
+          <div class="kpi-label">Stock Derivados</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-proveedores">
+        <div class="kpi-icon">🌱</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.total_proveedores }}</div>
+          <div class="kpi-label">Proveedores</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-activos">
+        <div class="kpi-icon">⚡</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.kpis.lotes_activos }}</div>
+          <div class="kpi-label">Lotes en Proceso</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+
+      <!-- DONA: Estados -->
+      <div class="chart-card">
+        <div class="chart-title">Distribución de Lotes</div>
+        <div class="chart-body dona-body">
+          <canvas #chartEstado width="200" height="200"></canvas>
+          <div class="dona-legend">
+            <div *ngFor="let item of stats.lotes_por_estado" class="legend-item">
+              <span class="legend-dot" [style.background]="getEstadoColor(item.estado)"></span>
+              <span class="legend-label">{{ getEstadoLabel(item.estado) }}</span>
+              <span class="legend-value">{{ item.cantidad }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRAS: Mensual -->
+      <div class="chart-card chart-wide">
+        <div class="chart-title">Kg Baba Comprados por Mes</div>
+        <div class="chart-body">
+          <canvas #chartMensual width="500" height="220"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECOND ROW -->
+    <div class="charts-row">
+
+      <!-- BARRAS HORIZONTALES: Proveedores -->
+      <div class="chart-card">
+        <div class="chart-title">Top Proveedores (kg)</div>
+        <div class="chart-body">
+          <canvas #chartProveedores width="360" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- RENDIMIENTO -->
+      <div class="chart-card">
+        <div class="chart-title">Rendimiento por Proveedor</div>
+        <div class="chart-body rendimiento-body">
+          <div *ngFor="let r of stats.rendimiento" class="rend-row">
+            <span class="rend-name">{{ r.proveedor_nombre }}</span>
+            <div class="rend-bar-container">
+              <div class="rend-bar" [style.width.%]="r.rendimiento_promedio"></div>
+            </div>
+            <span class="rend-value">{{ r.rendimiento_promedio }}%</span>
+          </div>
+          <div *ngIf="stats.rendimiento.length === 0" class="empty-mini">Sin datos</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LOTES RECIENTES -->
+    <div class="recent-section">
+      <div class="chart-title">Lotes Recientes</div>
+      <table class="recent-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Proveedor</th>
+            <th>Fecha Compra</th>
+            <th>Kg Baba</th>
+            <th>Stock Actual</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of stats.lotes_recientes">
+            <td><strong>{{ l.codigo }}</strong></td>
+            <td>{{ l.proveedor_nombre }}</td>
+            <td>{{ l.fecha_compra | date:'dd/MM/yyyy' }}</td>
+            <td>{{ l.kg_baba_compra }} kg</td>
+            <td>{{ l.stock_actual }} kg</td>
+            <td>
+              <span class="estado-badge" [style.background]="getEstadoColor(l.estado)">
+                {{ getEstadoLabel(l.estado) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PIPELINE DE TRAZABILIDAD -->
+    <div class="pipeline-section">
+      <div class="chart-title">Pipeline de Trazabilidad del Cacao</div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-icon">🌱</div>
+          <div class="pipe-label">Compra</div>
+          <div class="pipe-count">{{ stats.kpis.total_lotes }}</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🧪</div>
+          <div class="pipe-label">Fermentación</div>
+          <div class="pipe-count">{{ getLotesPorEstado('FERMENTACION') }}</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">☀️</div>
+          <div class="pipe-label">Secado</div>
+          <div class="pipe-count">{{ getLotesPorEstado('SECADO') }}</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">📦</div>
+          <div class="pipe-label">Almacén</div>
+          <div class="pipe-count">{{ getLotesPorEstado('ALMACEN') }}</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🔬</div>
+          <div class="pipe-label">Muestras</div>
+          <div class="pipe-count">{{ stats.kpis.total_muestras }}</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🍫</div>
+          <div class="pipe-label">Catas</div>
+          <div class="pipe-count">{{ stats.kpis.total_catas }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>

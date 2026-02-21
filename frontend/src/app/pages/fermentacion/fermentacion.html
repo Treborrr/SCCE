@@ -30,8 +30,7 @@
         <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
         <td>{{ lote.proveedor_nombre }}</td>
         <td>
-          <span class="badge"
-            [ngClass]="{
+          <span class="badge" [ngClass]="{
               'badge-ready': lote.estado === 'LISTO_PARA_FERMENTACION',
               'badge-active': lote.estado === 'FERMENTACION'
             }">
@@ -42,8 +41,7 @@
           {{ lote.ultimo_evento || 'Sin eventos' }}
         </td>
         <td>
-          <button class="btn-primary"
-                  (click)="abrirPanel(lote)">
+          <button class="btn-primary" (click)="abrirPanel(lote)">
             Registrar Evento
           </button>
         </td>
@@ -67,10 +65,17 @@
         Fermentación - {{ loteSeleccionado.codigo }}
       </h3>
 
-      <button class="btn-primary"
-              (click)="mostrarFormulario = !mostrarFormulario">
+      <button class="btn-primary" (click)="mostrarFormulario = !mostrarFormulario">
         + Nuevo Evento
       </button>
+    </div>
+
+    <!-- MENSAJE TOAST -->
+    <div *ngIf="mostrarMensaje" class="toast" [ngClass]="{
+        'toast-success': tipoMensaje === 'success',
+        'toast-error': tipoMensaje === 'error'
+        }">
+      {{ mensaje }}
     </div>
 
     <!-- TABLA DE EVENTOS -->
@@ -85,8 +90,9 @@
           <th>pH Pepa</th>
           <th>pH Pulpa</th>
           <th>Temp Int.</th>
-          <th>Prueba Corte</th>
           <th>Temp Amb.</th>
+          <th>Prueba Corte</th>
+          <th>Foto</th>
         </tr>
       </thead>
       <tbody>
@@ -95,21 +101,46 @@
           <td>{{ e.hora || '-' }}</td>
           <td>
             <ng-container *ngIf="e.tipo === 'REMOCION'; else normalTipo">
-                {{ contarRemocionActual(i) }}° REMOCIÓN
+              {{ contarRemocionActual(i) }}° REMOCIÓN
             </ng-container>
 
             <ng-template #normalTipo>
-                {{ e.tipo }}
+              {{ e.tipo }}
             </ng-template>
-        </td>
+          </td>
           <td>{{ e.cajon || '-' }}</td>
           <td>{{ e.brix || '-' }}</td>
           <td>{{ e.ph_pepa || '-' }}</td>
           <td>{{ e.ph_pulpa || '-' }}</td>
           <td>{{ e.temperatura_interna || '-' }}</td>
-          <td>{{ e.prueba_corte ? 'SI' : 'NO' }}</td>
           <td>{{ e.temperatura_ambiente || '-' }}</td>
-          
+          <td>
+            <span [ngClass]="e.prueba_corte ? 'badge-si' : 'badge-no'">
+              {{ e.prueba_corte ? 'SÍ' : 'NO' }}
+            </span>
+          </td>
+          <td>
+            <a *ngIf="e.foto_url" [href]="e.foto_url" target="_blank" class="link-foto">
+              📷 Ver foto
+            </a>
+            <ng-container *ngIf="!e.foto_url">
+              <button *ngIf="editandoFotoId !== e.id" class="btn-add-foto" (click)="iniciarSubirFoto(e)">
+                📷 + Agregar
+              </button>
+              <!-- Mini form subir foto -->
+              <div *ngIf="editandoFotoId === e.id" class="mini-foto-form">
+                <input type="file" accept="image/*" (change)="onFotoEventoSelected($event)" class="file-input-mini">
+                <input type="text" placeholder="Descripción (opcional)" [(ngModel)]="descripcionEvento"
+                  class="input-desc-mini">
+                <div class="mini-foto-actions">
+                  <button class="btn-mini-save" (click)="guardarFotoEvento(e)" [disabled]="subiendoFoto">
+                    {{ subiendoFoto ? 'Subiendo...' : 'Guardar' }}
+                  </button>
+                  <button class="btn-mini-cancel" (click)="cancelarSubirFoto()">✕</button>
+                </div>
+              </div>
+            </ng-container>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -119,128 +150,104 @@
       Este lote aún no tiene eventos registrados.
     </div>
 
-    <div *ngIf="mostrarMensaje"
-        class="toast"
-        [ngClass]="{
-        'toast-success': tipoMensaje === 'success',
-        'toast-error': tipoMensaje === 'error'
-        }">
-        {{ mensaje }}
-    </div>
-
     <!-- FORMULARIO NUEVO EVENTO -->
     <div *ngIf="mostrarFormulario" class="formulario-evento">
 
-        <h4>Registrar Evento</h4>
+      <h4>Registrar Evento</h4>
 
-        <div class="form-grid">
+      <div class="form-grid">
 
-            <!-- TIPO -->
-            <div>
-            <label>Tipo</label>
-            <select [(ngModel)]="nuevoEvento.tipo" name="tipo">
-                <option value="INICIO">INICIO</option>
-                <option value="REMOCION">REMOCIÓN</option>
-                <option value="CONTROL">CONTROL</option>
-                <option value="FINAL">FINAL</option>
-            </select>
-            </div>
-
-            <!-- FECHA -->
-            <div>
-            <label>Fecha</label>
-            <input type="date"
-                    [(ngModel)]="nuevoEvento.fecha"
-                    name="fecha">
-            </div>
-
-            <!-- HORA -->
-            <div>
-            <label>Hora</label>
-            <input type="time"
-                    [(ngModel)]="nuevoEvento.hora"
-                    name="hora">
-            </div>
-
-            <!-- CAJONES -->
-            <div>
-            <label>Cajones</label>
-            <input type="text"
-                    placeholder="Ej: 15,16,17"
-                    [(ngModel)]="nuevoEvento.cajon"
-                    name="cajon">
-            </div>
-
-            <!-- BRIX -->
-            <div>
-            <label>°Brix</label>
-            <input type="number"
-                    [(ngModel)]="nuevoEvento.brix"
-                    name="brix">
-            </div>
-
-            <!-- pH PEPA -->
-            <div>
-            <label>pH Pepa</label>
-            <input type="number"
-                    [(ngModel)]="nuevoEvento.ph_pepa"
-                    name="ph_pepa">
-            </div>
-
-            <!-- pH PULPA -->
-            <div>
-            <label>pH Pulpa</label>
-            <input type="number"
-                    [(ngModel)]="nuevoEvento.ph_pulpa"
-                    name="ph_pulpa">
-            </div>
-
-            <!-- TEMP INTERNA -->
-            <div>
-            <label>Temp Interna</label>
-            <input type="number"
-                    [(ngModel)]="nuevoEvento.temperatura_interna"
-                    name="temp_int">
-            </div>
-
-            <!-- TEMP AMBIENTE -->
-            <div>
-            <label>Temp Ambiente</label>
-            <input type="number"
-                    [(ngModel)]="nuevoEvento.temperatura_ambiente"
-                    name="temp_amb">
-            </div>
-
-            <!-- PRUEBA DE CORTE -->
-            <div class="checkbox">
-            <label>
-                <input type="checkbox"
-                    [(ngModel)]="nuevoEvento.prueba_corte"
-                    name="corte">
-                Prueba de Corte
-            </label>
-            </div>
-
-            <!-- SUBIR FOTO -->
-            <div *ngIf="nuevoEvento.prueba_corte">
-            <label>Subir Foto</label>
-            <input type="file"
-                    (change)="onFileSelected($event)">
-            </div>
-
+        <!-- TIPO -->
+        <div class="form-group">
+          <label>Tipo de Evento</label>
+          <select [(ngModel)]="nuevoEvento.tipo" name="tipo">
+            <option value="INICIO">INICIO</option>
+            <option value="REMOCION">REMOCIÓN</option>
+            <option value="CONTROL">CONTROL</option>
+            <option value="FINAL">FINAL</option>
+          </select>
         </div>
 
-        <div class="acciones">
-            <button class="btn-secondary"
-                    (click)="mostrarFormulario = false">
-            Cancelar
-            </button>
-
-            <button class="btn-primary"
-                    (click)="guardarEvento()">
-            Guardar Evento
-            </button>
+        <!-- FECHA -->
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" [(ngModel)]="nuevoEvento.fecha" name="fecha">
         </div>
+
+        <!-- HORA -->
+        <div class="form-group">
+          <label>Hora</label>
+          <input type="time" [(ngModel)]="nuevoEvento.hora" name="hora">
+        </div>
+
+        <!-- CAJONES -->
+        <div class="form-group">
+          <label>Cajones</label>
+          <input type="text" placeholder="Ej: 15, 16, 17" [(ngModel)]="nuevoEvento.cajon" name="cajon">
+        </div>
+
+        <!-- BRIX -->
+        <div class="form-group">
+          <label>°Brix</label>
+          <input type="number" placeholder="0.00" [(ngModel)]="nuevoEvento.brix" name="brix">
+        </div>
+
+        <!-- pH PEPA -->
+        <div class="form-group">
+          <label>pH Pepa</label>
+          <input type="number" placeholder="0.00" [(ngModel)]="nuevoEvento.ph_pepa" name="ph_pepa">
+        </div>
+
+        <!-- pH PULPA -->
+        <div class="form-group">
+          <label>pH Pulpa</label>
+          <input type="number" placeholder="0.00" [(ngModel)]="nuevoEvento.ph_pulpa" name="ph_pulpa">
+        </div>
+
+        <!-- TEMP INTERNA -->
+        <div class="form-group">
+          <label>Temp. Interna (°C)</label>
+          <input type="number" placeholder="0.00" [(ngModel)]="nuevoEvento.temperatura_interna" name="temp_int">
+        </div>
+
+        <!-- TEMP AMBIENTE -->
+        <div class="form-group">
+          <label>Temp. Ambiente (°C)</label>
+          <input type="number" placeholder="0.00" [(ngModel)]="nuevoEvento.temperatura_ambiente" name="temp_amb">
+        </div>
+
+        <!-- PRUEBA DE CORTE -->
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="nuevoEvento.prueba_corte" name="corte">
+            Prueba de Corte
+          </label>
+        </div>
+
+        <!-- SUBIR FOTO (solo si prueba de corte) -->
+        <div class="form-group foto-group" *ngIf="nuevoEvento.prueba_corte">
+          <label>Foto de Prueba de Corte</label>
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" class="file-input">
+          <div *ngIf="previewUrl" class="foto-preview">
+            <img [src]="previewUrl" alt="Preview" class="preview-img">
+            <button class="btn-remove-foto" (click)="eliminarFoto()">✕ Quitar</button>
+          </div>
+          <div *ngIf="subiendoFoto" class="uploading">
+            Subiendo foto...
+          </div>
+        </div>
+
+      </div>
+
+      <div class="acciones">
+        <button class="btn-secondary" (click)="mostrarFormulario = false">
+          Cancelar
+        </button>
+
+        <button class="btn-primary" (click)="guardarEvento()" [disabled]="subiendoFoto">
+          {{ subiendoFoto ? 'Subiendo foto...' : 'Guardar Evento' }}
+        </button>
+      </div>
 
     </div>
 

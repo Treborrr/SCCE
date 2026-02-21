@@ -414,7 +414,6 @@ Esto crea una cata independiente del lote original.
 # 🟤 ESTADOS DEFINITIVOS DEL LOTE
 
 ```
-INGRESADO
 LISTO_PARA_FERMENTACION
 FERMENTACION
 SECADO

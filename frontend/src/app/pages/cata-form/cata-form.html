@@ -1,0 +1,108 @@
+<div class="cata-page">
+
+    <!-- LOADING -->
+    <div *ngIf="cargando" class="cata-loading">
+        <div class="spinner"></div>
+        <p>Cargando formulario de cata...</p>
+    </div>
+
+    <!-- ERROR -->
+    <div *ngIf="error && !cargando" class="cata-error">
+        {{ error }}
+    </div>
+
+    <!-- YA ENVIADO -->
+    <div *ngIf="enviado" class="cata-success">
+        <div class="success-icon">✅</div>
+        <h2>¡Gracias por tu evaluación!</h2>
+        <p>Tu cata ha sido registrada correctamente.</p>
+    </div>
+
+    <!-- FORMULARIO PRINCIPAL -->
+    <div *ngIf="!cargando && !enviado && invitacion && invitacion.estado !== 'RESPONDIDA'" class="cata-container">
+
+        <!-- HEADER -->
+        <div class="cata-header">
+            <h1>Evaluación Sensorial</h1>
+            <p class="cata-subtitle">Lote: <strong>{{ invitacion.lote_codigo }}</strong></p>
+        </div>
+
+        <!-- DATOS DEL CATADOR -->
+        <div class="section">
+            <div class="section-title">Datos del Catador</div>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Nombre del Catador *</label>
+                    <input type="text" placeholder="Tu nombre completo" [(ngModel)]="form.nombre_catador">
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" [(ngModel)]="form.fecha">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Tueste</label>
+                    <input type="text" placeholder="Ej: Medio, Oscuro" [(ngModel)]="form.tipo_tueste">
+                </div>
+            </div>
+        </div>
+
+        <!-- LEYENDA -->
+        <div class="leyenda">
+            <div class="leyenda-title">Leyenda de Intensidad (0 – 10)</div>
+            <div class="leyenda-grid">
+                <div *ngFor="let item of leyenda" class="leyenda-item">
+                    <span class="leyenda-valor">{{ item.valor }}</span>
+                    <span class="leyenda-desc">{{ item.desc }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICO RADAR EN TIEMPO REAL -->
+        <div class="radar-section">
+            <canvas #radarCanvas width="500" height="500" class="radar-canvas"></canvas>
+        </div>
+
+        <!-- EVALUACIÓN SENSORIAL -->
+        <div class="section">
+            <div class="section-title">Evaluación Sensorial</div>
+
+            <div class="atributos-grid">
+                <div *ngFor="let attr of atributos" class="atributo-row">
+
+                    <div class="attr-label">{{ attr.label }}</div>
+
+                    <div class="attr-slider-container">
+                        <input type="range" min="0" max="10" step="1" [(ngModel)]="form[attr.key]"
+                            (input)="onSliderChange()" class="attr-slider"
+                            [style.--slider-color]="getIntensidadColor(form[attr.key])">
+                    </div>
+
+                    <div class="attr-value" [style.background]="getIntensidadColor(form[attr.key])">
+                        {{ form[attr.key] }}
+                    </div>
+
+                    <div class="attr-intensidad">
+                        {{ getIntensidadLabel(form[attr.key]) }}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ENVIAR -->
+        <div class="submit-section">
+            <button class="btn-enviar" (click)="enviar()">
+                Enviar Evaluación
+            </button>
+        </div>
+
+    </div>
+
+    <!-- YA COMPLETADA -->
+    <div *ngIf="invitacion?.estado === 'RESPONDIDA' && !enviado" class="cata-success">
+        <div class="success-icon">📋</div>
+        <h2>Ya respondida</h2>
+        <p>Esta invitación ya fue completada anteriormente.</p>
+    </div>
+
+</div>

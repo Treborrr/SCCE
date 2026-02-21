@@ -23,8 +23,11 @@ let AlmacenController = class AlmacenController {
     constructor(almacenService) {
         this.almacenService = almacenService;
     }
-    getLotesFermentacion() {
+    getLotesListos() {
         return this.almacenService.obtenerLotesListos();
+    }
+    getLotesEnAlmacen() {
+        return this.almacenService.obtenerLotesEnAlmacen();
     }
     async ingresarAlmacen(loteId, body, req) {
         return this.almacenService.ingresarAlmacen(loteId, body, req.user.id);
@@ -36,7 +39,13 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], AlmacenController.prototype, "getLotesFermentacion", null);
+], AlmacenController.prototype, "getLotesListos", null);
+__decorate([
+    (0, common_1.Get)('en-almacen'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AlmacenController.prototype, "getLotesEnAlmacen", null);
 __decorate([
     (0, common_1.Post)(':loteId/ingresar'),
     __param(0, (0, common_1.Param)('loteId')),

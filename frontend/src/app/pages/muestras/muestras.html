@@ -1,0 +1,383 @@
+<div class="page">
+
+  <h2>Muestras</h2>
+
+  <!-- TOAST -->
+  <div *ngIf="mostrarMensaje" class="toast"
+    [ngClass]="{ 'toast-success': tipoMensaje === 'success', 'toast-error': tipoMensaje === 'error' }">
+    {{ mensaje }}
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="cargando" class="loading">Cargando muestras...</div>
+
+  <!-- EMPTY -->
+  <div *ngIf="!cargando && muestras.length === 0" class="empty">
+    No hay muestras registradas aún.
+  </div>
+
+  <!-- TABLA DE MUESTRAS -->
+  <table *ngIf="!cargando && muestras.length > 0" class="tabla">
+    <thead>
+      <tr>
+        <th>Lote</th>
+        <th>Proveedor</th>
+        <th>Fecha Extracción</th>
+        <th>Peso (g)</th>
+        <th>Humedad %</th>
+        <th>Kg Descontados</th>
+        <th>N° Análisis</th>
+        <th>N° Catas</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of muestras">
+        <td><strong>{{ m.lote_codigo }}</strong></td>
+        <td>{{ m.proveedor_nombre }}</td>
+        <td>{{ m.fecha | date:'dd/MM/yyyy' }}</td>
+        <td>{{ m.peso_muestra_gramos }} g</td>
+        <td>{{ m.humedad ? m.humedad + '%' : '-' }}</td>
+        <td>{{ m.stock_descontado_kg }} kg</td>
+        <td><span class="badge-count">{{ m.total_analisis }}</span></td>
+        <td><span class="badge-cata">{{ m.total_catas || 0 }}</span></td>
+        <td>
+          <button class="btn-primary" (click)="abrirPanel(m)">
+            Ver Detalle
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- PANEL DETALLE DE MUESTRA -->
+<!-- ========================= -->
+
+<div class="overlay" *ngIf="mostrarPanel && muestraSeleccionada">
+  <div class="panel">
+
+    <button class="cerrar" (click)="cerrarPanel()">✕</button>
+
+    <div class="panel-header">
+      <div>
+        <h3>Muestra - Lote {{ muestraSeleccionada.lote_codigo }}</h3>
+        <p class="panel-sub">
+          {{ muestraSeleccionada.peso_muestra_gramos }}g
+          · {{ muestraSeleccionada.fecha | date:'dd/MM/yyyy' }}
+          · Humedad: {{ muestraSeleccionada.humedad || '-' }}%
+        </p>
+      </div>
+    </div>
+
+    <!-- TOAST PANEL -->
+    <div *ngIf="mostrarMensaje" class="toast"
+      [ngClass]="{ 'toast-success': tipoMensaje === 'success', 'toast-error': tipoMensaje === 'error' }">
+      {{ mensaje }}
+    </div>
+
+    <!-- ========================= -->
+    <!-- TABS: ANÁLISIS | CATAS -->
+    <!-- ========================= -->
+
+    <div class="tabs">
+      <button class="tab" [class.active]="activeTab === 'analisis'" (click)="activeTab = 'analisis'">
+        📊 Análisis Físico ({{ analisisList.length }})
+      </button>
+      <button class="tab" [class.active]="activeTab === 'catas'" (click)="activeTab = 'catas'">
+        🍫 Catas ({{ catasList.length }})
+      </button>
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- TAB: ANÁLISIS FÍSICO -->
+    <!-- ========================= -->
+
+    <div *ngIf="activeTab === 'analisis'">
+
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn-primary" (click)="abrirFormAnalisis()">+ Nuevo Análisis</button>
+      </div>
+
+      <!-- LISTA DE ANÁLISIS -->
+      <div *ngIf="analisisList.length > 0" class="analisis-list">
+        <div *ngFor="let a of analisisList" class="analisis-card">
+          <div class="analisis-header">
+            <strong>{{ a.fecha | date:'dd/MM/yyyy' }}</strong>
+            <span>Peso: {{ a.peso_muestra_gramos }}g · Humedad: {{ a.humedad_porcentaje }}%</span>
+            <a *ngIf="a.foto_url" [href]="a.foto_url" target="_blank" class="link-foto">📷 Ver foto</a>
+          </div>
+
+          <div class="section-label">Defectos (gramos)</div>
+          <div class="defectos-grid">
+            <div class="defecto-item"><span class="def-label">Planos</span><span class="def-value">{{ a.planos_gr
+                }}g</span></div>
+            <div class="defecto-item"><span class="def-label">Mat. Extraña</span><span class="def-value">{{
+                a.materia_extrana_gr }}g</span></div>
+            <div class="defecto-item"><span class="def-label">Granos &lt;1g</span><span class="def-value">{{
+                a.granos_menores_1gr_gr }}g</span></div>
+            <div class="defecto-item"><span class="def-label">Pasillas</span><span class="def-value">{{ a.pasillas_gr
+                }}g</span></div>
+            <div class="defecto-item"><span class="def-label">Múltiples</span><span class="def-value">{{ a.multiples_gr
+                }}g</span></div>
+            <div class="defecto-item"><span class="def-label">Germinados</span><span class="def-value">{{
+                a.germinados_gr }}g</span></div>
+            <div class="defecto-item total"><span class="def-label">Total Defectos</span><span class="def-value">{{
+                totalDefectos(a) }}g</span></div>
+          </div>
+
+          <div class="section-label">Calibre</div>
+          <div class="calibre-grid">
+            <div><span class="def-label">Granos evaluados:</span> {{ a.numero_granos_evaluados }}</div>
+            <div><span class="def-label">Peso 100 granos:</span> {{ a.peso_100_granos_gr }}g</div>
+          </div>
+
+          <div *ngIf="a.grupos && a.grupos.length > 0">
+            <div class="section-label">Prueba de Corte ({{ a.grupos.length }} grupos)</div>
+            <table class="tabla-grupos">
+              <thead>
+                <tr>
+                  <th>Grupo</th>
+                  <th>Fermentado</th>
+                  <th>Violeta</th>
+                  <th>Pizarroso</th>
+                  <th>Hongos</th>
+                  <th>Insectos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let g of a.grupos">
+                  <td><strong>Grupo {{ g.numero_grupo }}</strong></td>
+                  <td>{{ g.fermentado }}</td>
+                  <td>{{ g.violeta }}</td>
+                  <td>{{ g.pizarroso }}</td>
+                  <td>{{ g.hongos }}</td>
+                  <td>{{ g.insectos }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="analisisList.length === 0 && !mostrarFormAnalisis" class="empty">
+        Sin análisis físicos registrados.
+      </div>
+
+      <!-- FORMULARIO NUEVO ANÁLISIS (se mantiene igual) -->
+      <div *ngIf="mostrarFormAnalisis" class="form-analisis">
+        <h4>Registrar Análisis Físico</h4>
+
+        <div class="section-label">Datos Generales</div>
+        <div class="form-grid-3">
+          <div class="form-group"><label>Fecha</label><input type="date" [(ngModel)]="formAnalisis.fecha"></div>
+          <div class="form-group"><label>Peso Muestra (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.peso_muestra_gramos"></div>
+          <div class="form-group"><label>Humedad %</label><input type="number" placeholder="0.00"
+              [(ngModel)]="formAnalisis.humedad_porcentaje"></div>
+        </div>
+
+        <div class="form-group" style="margin-top:12px">
+          <label>Foto de la Muestra</label>
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" class="file-input-analisis">
+          <div *ngIf="previewUrl" class="foto-preview">
+            <img [src]="previewUrl" alt="Preview" class="preview-img">
+            <button class="btn-remove" (click)="eliminarFoto()">✕ Quitar</button>
+          </div>
+        </div>
+
+        <div class="section-label">Defectos (gramos)</div>
+        <div class="form-grid-3">
+          <div class="form-group"><label>Planos (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.planos_gr"></div>
+          <div class="form-group"><label>Materia Extraña (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.materia_extrana_gr"></div>
+          <div class="form-group"><label>Granos &lt;1g (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.granos_menores_1gr_gr"></div>
+          <div class="form-group"><label>Pasillas (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.pasillas_gr"></div>
+          <div class="form-group"><label>Múltiples (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.multiples_gr"></div>
+          <div class="form-group"><label>Germinados (g)</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.germinados_gr"></div>
+        </div>
+
+        <div class="section-label">Datos de Calibre</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>N° Granos Evaluados</label><input type="number" placeholder="0"
+              [(ngModel)]="formAnalisis.numero_granos_evaluados"></div>
+          <div class="form-group"><label>Peso 100 Granos (g)</label><input type="number" placeholder="0.00"
+              [(ngModel)]="formAnalisis.peso_100_granos_gr"></div>
+        </div>
+
+        <div class="section-label">Prueba de Corte</div>
+        <div class="form-grid-2" style="margin-bottom:12px">
+          <div class="form-group">
+            <label>N° Grupos de 50 Granos</label>
+            <input type="number" min="0" max="10" placeholder="0" [(ngModel)]="formAnalisis.numero_grupos_50_granos"
+              (input)="onGruposChange()">
+          </div>
+        </div>
+
+        <div *ngIf="formAnalisis.grupos.length > 0" class="grupos-container">
+          <div *ngFor="let grupo of formAnalisis.grupos; let i = index" class="grupo-card">
+            <div class="grupo-title">Grupo {{ i + 1 }}</div>
+            <div class="grupo-grid">
+              <div class="form-group"><label>Fermentado</label><input type="number" min="0"
+                  [(ngModel)]="grupo.fermentado"></div>
+              <div class="form-group"><label>Violeta</label><input type="number" min="0" [(ngModel)]="grupo.violeta">
+              </div>
+              <div class="form-group"><label>Pizarroso</label><input type="number" min="0"
+                  [(ngModel)]="grupo.pizarroso"></div>
+              <div class="form-group"><label>Hongos</label><input type="number" min="0" [(ngModel)]="grupo.hongos">
+              </div>
+              <div class="form-group"><label>Insectos</label><input type="number" min="0" [(ngModel)]="grupo.insectos">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acciones">
+          <button class="btn-secondary" (click)="mostrarFormAnalisis = false">Cancelar</button>
+          <button class="btn-primary" (click)="guardarAnalisis()">Guardar Análisis</button>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- TAB: CATAS -->
+    <!-- ========================= -->
+
+    <div *ngIf="activeTab === 'catas'">
+
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn-cata" (click)="abrirFormCata()">+ Nueva Sesión de Cata</button>
+      </div>
+
+      <!-- LISTA DE CATAS -->
+      <div *ngIf="catasList.length > 0" class="catas-list">
+        <div *ngFor="let c of catasList" class="cata-card">
+          <div class="cata-info">
+            <strong>{{ c.tipo_tueste || 'Sin tueste' }}</strong>
+            <span>{{ c.fecha | date:'dd/MM/yyyy' }}</span>
+            <span>{{ c.completadas }}/{{ c.total }} catadores</span>
+            <span class="cata-badge"
+              [ngClass]="{ 'cata-abierta': c.estado === 'ABIERTA', 'cata-cerrada': c.estado === 'CERRADA' }">
+              {{ c.estado }}
+            </span>
+          </div>
+          <button class="btn-ver-resultados" (click)="verResultados(c)">Ver Resultados</button>
+        </div>
+      </div>
+
+      <div *ngIf="catasList.length === 0 && !mostrarFormCata" class="empty">
+        No hay sesiones de cata para esta muestra.
+      </div>
+
+      <!-- FORM CREAR CATA -->
+      <div *ngIf="mostrarFormCata" class="form-analisis">
+        <h4>Nueva Sesión de Cata</h4>
+        <div class="form-grid-3">
+          <div class="form-group"><label>Fecha</label><input type="date" [(ngModel)]="formCata.fecha"></div>
+          <div class="form-group"><label>N° de Catadores</label><input type="number" min="1" max="20"
+              [(ngModel)]="formCata.total_catadores"></div>
+        </div>
+        <div class="section-label">Datos de Tostado</div>
+        <div class="form-grid-3">
+          <div class="form-group"><label>Temperatura (°C)</label><input type="number" placeholder="Ej: 160"
+              [(ngModel)]="formCata.temperatura"></div>
+          <div class="form-group"><label>Tiempo (min)</label><input type="number" placeholder="Ej: 15"
+              [(ngModel)]="formCata.tiempo"></div>
+          <div class="form-group"><label>Tostadora</label><input type="text" placeholder="Ej: Probat UG-22"
+              [(ngModel)]="formCata.tostadora"></div>
+        </div>
+        <div class="acciones">
+          <button class="btn-secondary" (click)="mostrarFormCata = false">Cancelar</button>
+          <button class="btn-primary" (click)="crearCata()">Crear y Generar Links</button>
+        </div>
+      </div>
+
+      <!-- LINKS + QR GENERADOS -->
+      <div *ngIf="mostrarLinksModal" class="links-modal">
+        <h4>🔗 Links y QR para Catadores</h4>
+        <p class="links-desc">Comparte estos links o escanea los QR. Cada uno es único y de un solo uso.</p>
+        <div class="links-list">
+          <div *ngFor="let link of cataLinks" class="link-row">
+            <div class="link-left">
+              <span class="link-num">Catador {{ link.catador }}</span>
+              <code class="link-url">{{ link.url }}</code>
+              <button class="btn-copiar" (click)="copiarLink(link.url)">📋 Copiar</button>
+            </div>
+            <div class="qr-container" *ngIf="link.qrDataUrl">
+              <img [src]="link.qrDataUrl" alt="QR" class="qr-img">
+            </div>
+          </div>
+        </div>
+        <div class="acciones">
+          <button class="btn-primary" (click)="mostrarLinksModal = false">Cerrar</button>
+        </div>
+      </div>
+
+      <!-- RESULTADOS -->
+      <div *ngIf="mostrarResultados" class="form-analisis" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4>Resultados de Cata</h4>
+          <button class="btn-secondary" (click)="mostrarResultados = false">Cerrar</button>
+        </div>
+
+        <div *ngIf="cataResultados.length === 0" class="empty">Aún no hay respuestas.</div>
+
+        <table *ngIf="cataResultados.length > 0" class="tabla" style="margin-top:10px;font-size:12px">
+          <thead>
+            <tr>
+              <th>Catador</th>
+              <th>Tostado</th>
+              <th>Defecto</th>
+              <th>Cacao</th>
+              <th>Amargor</th>
+              <th>Astringencia</th>
+              <th>Acidez</th>
+              <th>F.Fresca</th>
+              <th>F.Marrón</th>
+              <th>Vegetal</th>
+              <th>Floral</th>
+              <th>Madera</th>
+              <th>Especies</th>
+              <th>Nueces</th>
+              <th>Caramelo</th>
+              <th>Global</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of cataResultados">
+              <td><strong>{{ r.catador_nombre || r.nombre_catador }}</strong></td>
+              <td>{{ r.tostado }}</td>
+              <td>{{ r.defecto }}</td>
+              <td>{{ r.cacao }}</td>
+              <td>{{ r.amargor }}</td>
+              <td>{{ r.astringencia }}</td>
+              <td>{{ r.acidez }}</td>
+              <td>{{ r.fruta_fresca }}</td>
+              <td>{{ r.fruta_marron }}</td>
+              <td>{{ r.vegetal }}</td>
+              <td>{{ r.floral }}</td>
+              <td>{{ r.madera }}</td>
+              <td>{{ r.especies }}</td>
+              <td>{{ r.nueces }}</td>
+              <td>{{ r.caramel_pan }}</td>
+              <td><strong>{{ r.global }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -2,53 +2,110 @@
 
   <h2>Almacén</h2>
 
-  <!-- TABLA PRINCIPAL -->
-  <table *ngIf="lotes.length > 0" class="tabla">
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Proveedor</th>
-        <th>Fecha Compra</th>
-        <th>Estado</th>
-        <th>Acción</th>
-      </tr>
-    </thead>
+  <!-- TOAST -->
+  <div *ngIf="mostrarMensaje" class="toast" [ngClass]="{
+         'toast-success': tipoMensaje === 'success',
+         'toast-error': tipoMensaje === 'error'
+       }">
+    {{ mensaje }}
+  </div>
 
-    <tbody>
-      <tr *ngFor="let lote of lotes">
-        <td>{{ lote.codigo }}</td>
-        <td>{{ lote.proveedor_nombre }}</td>
-        <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+  <!-- ========================= -->
+  <!-- LOTES PENDIENTES DE INGRESO -->
+  <!-- ========================= -->
 
-        <td>
-          <span class="badge"
-            [ngClass]="{
-              'badge-ready': lote.estado === 'LISTO_PARA_ALMACEN',
-              'badge-done': lote.estado === 'ALMACEN'
-            }">
-            {{ lote.estado }}
-          </span>
-        </td>
+  <div *ngIf="lotesListos.length > 0" class="section">
 
-        <td>
-          <button *ngIf="lote.estado === 'LISTO_PARA_ALMACEN'"
-                  class="btn-primary"
-                  (click)="abrirModal(lote)">
-            Registrar Ingreso
-          </button>
+    <h3 class="section-title">Lotes Pendientes de Ingreso</h3>
 
-          <span *ngIf="lote.estado === 'ALMACEN'"
-                class="text-muted">
-            Registrado
-          </span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Proveedor</th>
+          <th>Fecha Compra</th>
+          <th>Kg Baba</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lote of lotesListos">
+          <td>{{ lote.codigo }}</td>
+          <td>{{ lote.proveedor_nombre }}</td>
+          <td>{{ lote.fecha_compra | date:'dd/MM/yyyy' }}</td>
+          <td>{{ lote.kg_baba_compra }}</td>
+          <td>
+            <span class="badge badge-ready">{{ lote.estado }}</span>
+          </td>
+          <td>
+            <button class="btn-primary" (click)="abrirModalIngreso(lote)">
+              Registrar Ingreso
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-  <!-- EMPTY STATE -->
-  <div *ngIf="lotes.length === 0" class="empty">
-    No hay lotes disponibles
+  </div>
+
+  <!-- ========================= -->
+  <!-- LOTES EN ALMACÉN -->
+  <!-- ========================= -->
+
+  <div class="section">
+
+    <h3 class="section-title">Lotes en Almacén</h3>
+
+    <table *ngIf="lotesEnAlmacen.length > 0" class="tabla">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Proveedor</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Sacos</th>
+          <th>Kg Brutos</th>
+          <th>Kg Neto</th>
+          <th>Rendimiento %</th>
+          <th>Stock Actual</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lote of lotesEnAlmacen">
+          <td><strong>{{ lote.codigo }}</strong></td>
+          <td>{{ lote.proveedor_nombre }}</td>
+          <td>{{ lote.fecha | date:'dd/MM/yyyy' }}</td>
+          <td>{{ lote.hora || '-' }}</td>
+          <td>{{ lote.sacos }}</td>
+          <td>{{ lote.kg_brutos }} kg</td>
+          <td>{{ lote.kg_neto_final | number:'1.2-2' }} kg</td>
+          <td>
+            <span class="badge-rendimiento" [ngClass]="{
+                    'rend-good': lote.rendimiento > 80,
+                    'rend-bad': lote.rendimiento < 70,
+                    'rend-normal': lote.rendimiento >= 70 && lote.rendimiento <= 80
+                  }">
+              {{ lote.rendimiento | number:'1.2-2' }}%
+            </span>
+          </td>
+          <td>
+            <strong>{{ lote.stock_actual | number:'1.2-2' }} kg</strong>
+          </td>
+          <td>
+            <button class="btn-muestra" (click)="abrirModalMuestra(lote)">
+              + Crear Muestra
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="lotesEnAlmacen.length === 0" class="empty">
+      No hay lotes en almacén aún.
+    </div>
+
   </div>
 
 </div>
@@ -58,105 +115,72 @@
 <!-- MODAL INGRESO ALMACÉN -->
 <!-- ========================= -->
 
-<div class="overlay" *ngIf="mostrarModal">
+<div class="overlay" *ngIf="mostrarModalIngreso">
 
   <div class="modal-box">
 
-    <!-- HEADER -->
     <div class="modal-header">
       <h3>Ingreso a Almacén - {{ loteSeleccionado?.codigo }}</h3>
-      <button class="btn-close" (click)="cerrarModal()">✕</button>
+      <button class="btn-close" (click)="cerrarModalIngreso()">✕</button>
     </div>
 
-    <!-- ========================= -->
-    <!-- DATOS INGRESO -->
-    <!-- ========================= -->
-
-    <div class="section-title">Datos de Ingreso</div>
+    <div class="section-label">Datos de Ingreso</div>
 
     <div class="form-grid">
 
       <div class="form-group">
         <label>Fecha</label>
-        <input type="date" [(ngModel)]="form.fecha">
+        <input type="date" [(ngModel)]="formIngreso.fecha">
       </div>
 
       <div class="form-group">
         <label>Hora</label>
-        <input type="time" [(ngModel)]="form.hora">
+        <input type="time" [(ngModel)]="formIngreso.hora">
       </div>
 
       <div class="form-group">
         <label>Sacos</label>
-        <input type="number"
-               [(ngModel)]="form.sacos"
-               (input)="calcularPreview()">
+        <input type="number" [(ngModel)]="formIngreso.sacos" (input)="calcularPreview()">
       </div>
 
       <div class="form-group">
         <label>Kg Brutos</label>
-        <input type="number"
-               [(ngModel)]="form.kg_brutos"
-               (input)="calcularPreview()">
+        <input type="number" [(ngModel)]="formIngreso.kg_brutos" (input)="calcularPreview()">
       </div>
 
     </div>
 
-    <!-- ========================= -->
-    <!-- RESULTADOS CALCULADOS -->
-    <!-- ========================= -->
-
-    <div class="section-title">Resultados Calculados</div>
+    <div class="section-label">Resultados Calculados</div>
 
     <div class="preview-cards">
 
-      <!-- KG NETO -->
       <div class="card-result">
         <div class="card-label">Kg Neto</div>
-        <div class="card-value">
-          {{ animatedKgNeto }} kg
-        </div>
+        <div class="card-value">{{ animatedKgNeto }} kg</div>
       </div>
 
-      <!-- RENDIMIENTO -->
-      <div class="card-result"
-           [ngClass]="{
+      <div class="card-result" [ngClass]="{
              'good': animatedRendimiento > 80,
              'bad': animatedRendimiento < 70
            }">
-
         <div class="card-label">Rendimiento</div>
-        <div class="card-value">
-          {{ animatedRendimiento }} %
-        </div>
+        <div class="card-value">{{ animatedRendimiento }} %</div>
       </div>
 
-      <!-- PÉRDIDA -->
       <div class="card-result loss-card">
-        <div class="card-label">Pérdida Estimada</div>
-        <div class="card-value">
-          {{ perdidaKg }} kg
-        </div>
+        <div class="card-label">Merma (Baba → Seco)</div>
+        <div class="card-value">{{ perdidaKg }} kg</div>
       </div>
 
     </div>
 
-    <!-- ========================= -->
-    <!-- ACCIONES -->
-    <!-- ========================= -->
-
     <div class="modal-actions">
-
-      <button class="btn-secondary"
-              (click)="cerrarModal()">
+      <button class="btn-secondary" (click)="cerrarModalIngreso()">
         Cancelar
       </button>
-
-      <button class="btn-primary"
-              (click)="registrarIngreso()">
+      <button class="btn-primary" (click)="registrarIngreso()">
         Guardar Ingreso
       </button>
-
     </div>
 
   </div>
@@ -164,14 +188,56 @@
 
 
 <!-- ========================= -->
-<!-- TOAST MENSAJE -->
+<!-- MODAL CREAR MUESTRA -->
 <!-- ========================= -->
 
-<div *ngIf="mostrarMensaje"
-     class="toast"
-     [ngClass]="{
-       'toast-success': tipoMensaje === 'success',
-       'toast-error': tipoMensaje === 'error'
-     }">
-  {{ mensaje }}
+<div class="overlay" *ngIf="mostrarModalMuestra">
+
+  <div class="modal-box modal-muestra">
+
+    <div class="modal-header">
+      <h3>Crear Muestra - {{ loteParaMuestra?.codigo }}</h3>
+      <button class="btn-close" (click)="cerrarModalMuestra()">✕</button>
+    </div>
+
+    <div class="info-stock">
+      Stock disponible: <strong>{{ loteParaMuestra?.stock_actual | number:'1.2-2' }} kg</strong>
+    </div>
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="formMuestra.fecha">
+      </div>
+
+      <div class="form-group">
+        <label>Peso Muestra (gramos)</label>
+        <input type="number" placeholder="Ej: 250" [(ngModel)]="formMuestra.peso_muestra_gramos">
+      </div>
+
+      <div class="form-group">
+        <label>Humedad %</label>
+        <input type="number" placeholder="Ej: 7.5" [(ngModel)]="formMuestra.humedad">
+      </div>
+
+    </div>
+
+    <div *ngIf="formMuestra.peso_muestra_gramos" class="muestra-preview">
+      Se descontarán <strong>{{ (formMuestra.peso_muestra_gramos! / 1000) | number:'1.3-3' }} kg</strong>
+      del stock actual.
+      Nuevo stock: <strong>{{ (loteParaMuestra?.stock_actual - formMuestra.peso_muestra_gramos! / 1000) | number:'1.2-2'
+        }} kg</strong>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="cerrarModalMuestra()">
+        Cancelar
+      </button>
+      <button class="btn-primary" (click)="registrarMuestra()">
+        Crear Muestra
+      </button>
+    </div>
+
+  </div>
 </div>

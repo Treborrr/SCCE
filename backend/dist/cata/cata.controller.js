@@ -23,17 +23,35 @@ let CataController = class CataController {
     constructor(cataService) {
         this.cataService = cataService;
     }
+    listarCatas(muestraId) {
+        return this.cataService.listarCatas(muestraId);
+    }
     async crearCata(muestraId, body, req) {
         return this.cataService.crearCata(muestraId, body, req.user.id);
     }
-    async responderCata(cataId, body) {
-        return this.cataService.responderCata(cataId, body);
+    obtenerInvitacion(token) {
+        return this.cataService.obtenerInvitacion(token);
+    }
+    async responderCata(token, body) {
+        return this.cataService.responderCata(token, body);
+    }
+    obtenerResultados(cataId) {
+        return this.cataService.obtenerResultados(cataId);
     }
 };
 exports.CataController = CataController;
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('ADMIN', 'CALIDAD'),
+    (0, roles_decorator_1.Roles)('ADMIN', 'CALIDAD', 'OPERADOR_ALMACEN'),
+    (0, common_1.Get)('muestra/:muestraId'),
+    __param(0, (0, common_1.Param)('muestraId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CataController.prototype, "listarCatas", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('ADMIN', 'CALIDAD', 'OPERADOR_ALMACEN'),
     (0, common_1.Post)(':muestraId/crear'),
     __param(0, (0, common_1.Param)('muestraId')),
     __param(1, (0, common_1.Body)()),
@@ -43,13 +61,29 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CataController.prototype, "crearCata", null);
 __decorate([
-    (0, common_1.Post)('responder/:cataId'),
-    __param(0, (0, common_1.Param)('cataId')),
+    (0, common_1.Get)('invitacion/:token'),
+    __param(0, (0, common_1.Param)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CataController.prototype, "obtenerInvitacion", null);
+__decorate([
+    (0, common_1.Post)('responder/:token'),
+    __param(0, (0, common_1.Param)('token')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], CataController.prototype, "responderCata", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('ADMIN', 'CALIDAD', 'OPERADOR_ALMACEN'),
+    (0, common_1.Get)(':cataId/resultados'),
+    __param(0, (0, common_1.Param)('cataId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CataController.prototype, "obtenerResultados", null);
 exports.CataController = CataController = __decorate([
     (0, common_1.Controller)('cata'),
     __metadata("design:paramtypes", [cata_service_1.CataService])

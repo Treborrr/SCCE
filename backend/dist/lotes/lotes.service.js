@@ -34,7 +34,7 @@ let LotesService = class LotesService {
           stock_actual,
           created_by
         )
-        VALUES ($1, $2, $3, $4, $5, 'INGRESADO', 0, $6)
+        VALUES ($1, $2, $3, $4, $5, 'LISTO_PARA_FERMENTACION', 0, $6)
         RETURNING *
         `, [
                 dto.codigo,

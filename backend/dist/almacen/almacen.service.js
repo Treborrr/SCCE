@@ -34,6 +34,27 @@ let AlmacenService = class AlmacenService {
       ORDER BY l.created_at DESC
     `).then(r => r.rows);
     }
+    async obtenerLotesEnAlmacen() {
+        const result = await this.pool.query(`
+      SELECT 
+        l.id,
+        l.codigo,
+        l.proveedor_nombre,
+        l.kg_baba_compra,
+        l.kg_neto_final,
+        l.rendimiento,
+        l.stock_actual,
+        a.fecha,
+        a.hora,
+        a.sacos,
+        a.kg_brutos
+      FROM lotes l
+      LEFT JOIN almacenes a ON a.lote_id = l.id
+      WHERE l.estado = 'ALMACEN' AND l.stock_actual > 0
+      ORDER BY a.fecha DESC
+    `);
+        return result.rows;
+    }
     async ingresarAlmacen(loteId, data, userId) {
         const client = await this.pool.connect();
         try {
@@ -41,20 +62,20 @@ let AlmacenService = class AlmacenService {
             const loteResult = await client.query('SELECT estado, kg_baba_compra FROM lotes WHERE id = $1 FOR UPDATE', [loteId]);
             const lote = loteResult.rows[0];
             if (!lote) {
-                throw new Error('Lote no existe');
+                throw new common_1.BadRequestException('Lote no existe');
             }
             if (lote.estado !== 'LISTO_PARA_ALMACEN') {
-                throw new Error('El lote no está listo para ingresar a almacén');
+                throw new common_1.BadRequestException('El lote no está listo para ingresar a almacén');
             }
             const sacos = Number(data.sacos);
             const kgBrutos = Number(data.kg_brutos);
             if (sacos <= 0 || kgBrutos <= 0) {
-                throw new Error('Valores inválidos');
+                throw new common_1.BadRequestException('Valores inválidos');
             }
             const kgNeto = kgBrutos - (sacos * 0.2);
             const rendimiento = (kgNeto / Number(lote.kg_baba_compra)) * 100;
             if (kgNeto <= 0) {
-                throw new Error('Kg neto inválido');
+                throw new common_1.BadRequestException('Kg neto inválido');
             }
             await client.query(`
         INSERT INTO almacenes (
@@ -66,14 +87,7 @@ let AlmacenService = class AlmacenService {
           created_by
         )
         VALUES ($1,$2,$3,$4,$5,$6)
-        `, [
-                loteId,
-                data.fecha,
-                data.hora,
-                sacos,
-                kgBrutos,
-                userId,
-            ]);
+        `, [loteId, data.fecha, data.hora, sacos, kgBrutos, userId]);
             await client.query(`
         UPDATE lotes
         SET estado = 'ALMACEN',

@@ -16,11 +16,18 @@ import { Roles } from '../auth/roles.decorator';
 @Roles('ADMIN', 'OPERADOR_ALMACEN')
 @Controller('almacen')
 export class AlmacenController {
-  constructor(private readonly almacenService: AlmacenService) {}
+  constructor(private readonly almacenService: AlmacenService) { }
+
   @Get('lotes')
-  getLotesFermentacion() {
+  getLotesListos() {
     return this.almacenService.obtenerLotesListos();
   }
+
+  @Get('en-almacen')
+  getLotesEnAlmacen() {
+    return this.almacenService.obtenerLotesEnAlmacen();
+  }
+
   @Post(':loteId/ingresar')
   async ingresarAlmacen(
     @Param('loteId') loteId: string,

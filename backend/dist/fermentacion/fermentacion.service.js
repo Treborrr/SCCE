@@ -44,6 +44,7 @@ let FermentacionService = class FermentacionService {
     async getEventos(loteId) {
         const result = await this.pool.query(`
       SELECT 
+        id,
         fecha,
         hora,
         tipo,
@@ -54,109 +55,14 @@ let FermentacionService = class FermentacionService {
         temperatura_interna,
         temperatura_ambiente,
         es_remocion,
-        prueba_corte
+        prueba_corte,
+        foto_url,
+        descripcion
       FROM fermentacion_eventos
       WHERE lote_id = $1
       ORDER BY fecha, hora
     `, [loteId]);
         return result.rows;
-    }
-    async registrarEvento(loteId, dto, userId) {
-        const tipo = dto.tipo;
-        const inicioExistente = await this.pool.query(`SELECT id FROM fermentacion_eventos
-       WHERE lote_id = $1 AND tipo = 'INICIO'`, [loteId]);
-        const finalExistente = await this.pool.query(`SELECT id FROM fermentacion_eventos
-       WHERE lote_id = $1 AND tipo = 'FINAL'`, [loteId]);
-        if (tipo === 'INICIO' && inicioExistente.rows.length > 0) {
-            throw new Error('El lote ya tiene un INICIO');
-        }
-        if (tipo === 'REMOCION' && inicioExistente.rows.length === 0) {
-            throw new Error('No se puede registrar REMOCION sin INICIO');
-        }
-        if (tipo === 'FINAL') {
-            if (inicioExistente.rows.length === 0) {
-                throw new Error('No se puede finalizar sin INICIO');
-            }
-            if (finalExistente.rows.length > 0) {
-                throw new Error('El lote ya tiene FINAL');
-            }
-            await this.pool.query(`UPDATE lotes SET estado = 'SECADO'
-         WHERE id = $1`, [loteId]);
-        }
-        if (tipo === 'INICIO') {
-            await this.pool.query(`UPDATE lotes SET estado = 'FERMENTACION'
-         WHERE id = $1`, [loteId]);
-        }
-        const lote = await this.pool.query(`SELECT estado FROM lotes WHERE id = $1`, [loteId]);
-        if (lote.rows.length === 0) {
-            throw new Error('Lote no encontrado');
-        }
-        if (tipo === 'INICIO') {
-            const inicioExistente = await this.pool.query(`SELECT id FROM fermentacion_eventos
-        WHERE lote_id = $1 AND tipo = 'INICIO'`, [loteId]);
-            if (inicioExistente.rows.length > 0) {
-                throw new Error('El lote ya tiene INICIO');
-            }
-            await this.pool.query(`UPDATE lotes SET estado = 'FERMENTACION'
-        WHERE id = $1`, [loteId]);
-        }
-        let numeroRemocion = null;
-        if (tipo === 'REMOCION') {
-            const inicio = await this.pool.query(`SELECT id FROM fermentacion_eventos
-        WHERE lote_id = $1 AND tipo = 'INICIO'`, [loteId]);
-            if (inicio.rows.length === 0) {
-                throw new Error('No se puede registrar REMOCION sin INICIO');
-            }
-            const remociones = await this.pool.query(`SELECT COUNT(*) FROM fermentacion_eventos
-        WHERE lote_id = $1 AND tipo = 'REMOCION'`, [loteId]);
-            numeroRemocion = parseInt(remociones.rows[0].count) + 1;
-        }
-        if (tipo === 'FINAL') {
-            const finalExistente = await this.pool.query(`SELECT id FROM fermentacion_eventos
-        WHERE lote_id = $1 AND tipo = 'FINAL'`, [loteId]);
-            if (finalExistente.rows.length > 0) {
-                throw new Error('Ya existe FINAL');
-            }
-            await this.pool.query(`UPDATE lotes SET estado = 'SECADO'
-        WHERE id = $1`, [loteId]);
-        }
-        await this.pool.query(`
-      INSERT INTO fermentacion_eventos (
-        lote_id,
-        tipo,
-        fecha,
-        hora,
-        cajon,
-        brix,
-        ph_pepa,
-        ph_pulpa,
-        temperatura_interna,
-        temperatura_ambiente,
-        numero_remocion,
-        prueba_corte,
-        foto_url,
-        created_by
-      )
-      VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-      )
-      `, [
-            loteId,
-            dto.tipo,
-            dto.fecha,
-            dto.hora,
-            dto.cajon,
-            dto.brix,
-            dto.ph_pepa,
-            dto.ph_pulpa,
-            dto.temperatura,
-            dto.temp_ambiente,
-            numeroRemocion,
-            dto.prueba_corte,
-            dto.foto_url,
-            userId
-        ]);
-        return { message: 'Evento registrado correctamente' };
     }
     async crearEvento(loteId, data, userId) {
         const client = await this.pool.connect();
@@ -165,16 +71,58 @@ let FermentacionService = class FermentacionService {
             const loteResult = await client.query('SELECT estado FROM lotes WHERE id = $1 FOR UPDATE', [loteId]);
             const lote = loteResult.rows[0];
             if (!lote) {
-                throw new Error('Lote no existe');
+                throw new common_1.BadRequestException('Lote no existe');
             }
+            const inicioResult = await client.query(`SELECT id FROM fermentacion_eventos WHERE lote_id = $1 AND tipo = 'INICIO'`, [loteId]);
+            const tieneInicio = inicioResult.rows.length > 0;
+            const finalResult = await client.query(`SELECT id FROM fermentacion_eventos WHERE lote_id = $1 AND tipo = 'FINAL'`, [loteId]);
+            const tieneFinal = finalResult.rows.length > 0;
             if (data.tipo === 'INICIO') {
-                if (data.tipo === 'INICIO' && lote.estado !== 'LISTO_PARA_FERMENTACION') {
-                    throw new Error('Solo lotes LISTO_PARA_FERMENTACION pueden iniciar fermentación');
+                if (lote.estado !== 'LISTO_PARA_FERMENTACION') {
+                    throw new common_1.BadRequestException('Solo lotes LISTO_PARA_FERMENTACION pueden iniciar fermentación');
+                }
+                if (tieneInicio) {
+                    throw new common_1.BadRequestException('El lote ya tiene un evento INICIO registrado');
                 }
             }
-            else {
-                if (lote.estado !== 'FERMENTACION') {
-                    throw new Error('El lote no está en fermentación');
+            if (data.tipo === 'REMOCION') {
+                if (!tieneInicio) {
+                    throw new common_1.BadRequestException('No se puede registrar REMOCIÓN sin un evento INICIO previo');
+                }
+                if (tieneFinal) {
+                    throw new common_1.BadRequestException('No se puede registrar eventos después del FINAL');
+                }
+            }
+            if (data.tipo === 'CONTROL') {
+                if (!tieneInicio) {
+                    throw new common_1.BadRequestException('No se puede registrar CONTROL sin un evento INICIO previo');
+                }
+                if (tieneFinal) {
+                    throw new common_1.BadRequestException('No se puede registrar eventos después del FINAL');
+                }
+            }
+            if (data.tipo === 'FINAL') {
+                if (!tieneInicio) {
+                    throw new common_1.BadRequestException('No se puede finalizar sin un evento INICIO previo');
+                }
+                if (tieneFinal) {
+                    throw new common_1.BadRequestException('El lote ya tiene un evento FINAL registrado');
+                }
+            }
+            const ultimoEventoResult = await client.query(`SELECT fecha, hora FROM fermentacion_eventos
+         WHERE lote_id = $1
+         ORDER BY fecha DESC, hora DESC
+         LIMIT 1`, [loteId]);
+            if (ultimoEventoResult.rows.length > 0) {
+                const ultimo = ultimoEventoResult.rows[0];
+                const fechaUltimo = String(ultimo.fecha).split('T')[0];
+                const horaUltimo = ultimo.hora || '00:00';
+                const fechaNueva = String(data.fecha);
+                const horaNueva = data.hora || '00:00';
+                const ultimaFecha = new Date(`${fechaUltimo}T${horaUltimo}`);
+                const nuevaFecha = new Date(`${fechaNueva}T${horaNueva}`);
+                if (nuevaFecha < ultimaFecha) {
+                    throw new common_1.BadRequestException(`La fecha/hora del evento no puede ser anterior al último evento registrado (${fechaUltimo} ${horaUltimo})`);
                 }
             }
             let numeroRemocion = null;
@@ -215,8 +163,8 @@ let FermentacionService = class FermentacionService {
                 data.temperatura_interna,
                 data.temperatura_ambiente,
                 data.tipo === 'REMOCION',
-                data.prueba_corte,
-                data.foto_url,
+                data.prueba_corte || false,
+                data.foto_url || null,
                 data.descripcion,
                 userId,
             ]);
@@ -248,6 +196,15 @@ let FermentacionService = class FermentacionService {
         finally {
             client.release();
         }
+    }
+    async actualizarFotoEvento(eventoId, fotoUrl, descripcion) {
+        const result = await this.pool.query(`UPDATE fermentacion_eventos 
+       SET foto_url = $1, descripcion = COALESCE($2, descripcion), prueba_corte = true
+       WHERE id = $3 RETURNING *`, [fotoUrl, descripcion || null, eventoId]);
+        if (result.rowCount === 0) {
+            throw new common_1.BadRequestException('Evento no encontrado');
+        }
+        return result.rows[0];
     }
 };
 exports.FermentacionService = FermentacionService;

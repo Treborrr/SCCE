@@ -6,7 +6,7 @@ import { CreateLoteDto } from './dto/create-lote.dto';
 
 @Injectable()
 export class LotesService {
-  constructor(@Inject('PG_POOL') private pool: Pool) {}
+  constructor(@Inject('PG_POOL') private pool: Pool) { }
 
   // =========================
   // CREAR LOTE
@@ -25,7 +25,7 @@ export class LotesService {
           stock_actual,
           created_by
         )
-        VALUES ($1, $2, $3, $4, $5, 'INGRESADO', 0, $6)
+        VALUES ($1, $2, $3, $4, $5, 'LISTO_PARA_FERMENTACION', 0, $6)
         RETURNING *
         `,
         [
@@ -85,7 +85,7 @@ export class LotesService {
     return result.rows[0];
   }
 
-// Pasar Lote a Listo para Fermentar
+  // Pasar Lote a Listo para Fermentar
   async marcarListoFermentacion(id: string) {
     const result = await this.pool.query(
       `

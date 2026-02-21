@@ -22,6 +22,7 @@ const muestras_module_1 = require("./muestras/muestras.module");
 const analisis_module_1 = require("./analisis/analisis.module");
 const cata_module_1 = require("./cata/cata.module");
 const lotes_derivados_module_1 = require("./lotes-derivados/lotes-derivados.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,7 +35,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-            }), fermentacion_module_1.FermentacionModule, secado_module_1.SecadoModule, almacen_module_1.AlmacenModule, muestras_module_1.MuestrasModule, analisis_module_1.AnalisisModule, cata_module_1.CataModule, lotes_derivados_module_1.LotesDerivadosModule
+            }), fermentacion_module_1.FermentacionModule, secado_module_1.SecadoModule, almacen_module_1.AlmacenModule, muestras_module_1.MuestrasModule, analisis_module_1.AnalisisModule, cata_module_1.CataModule, lotes_derivados_module_1.LotesDerivadosModule, dashboard_module_1.DashboardModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

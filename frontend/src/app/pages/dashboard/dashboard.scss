@@ -1,7 +1,387 @@
-.card {
+.dashboard {
+  padding: 24px 30px;
+  background: #f1f5f9;
+  min-height: 100vh;
+}
+
+/* HEADER */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.dash-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dash-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.dash-date {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* KPIs */
+.kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
   background: white;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid transparent;
+  transition: 0.2s;
+}
+
+.kpi-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.kpi-stock {
+  border-left-color: #22c55e;
+}
+
+.kpi-lotes {
+  border-left-color: #3b82f6;
+}
+
+.kpi-muestras {
+  border-left-color: #8b5cf6;
+}
+
+.kpi-analisis {
+  border-left-color: #f59e0b;
+}
+
+.kpi-catas {
+  border-left-color: #ec4899;
+}
+
+.kpi-derivados {
+  border-left-color: #06b6d4;
+}
+
+.kpi-proveedores {
+  border-left-color: #10b981;
+}
+
+.kpi-activos {
+  border-left-color: #f97316;
+}
+
+.kpi-icon {
+  font-size: 28px;
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* CHARTS */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.chart-wide {
+  grid-column: span 1;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 14px;
+}
+
+.chart-body {
+  display: flex;
+  justify-content: center;
+}
+
+.chart-body canvas {
+  max-width: 100%;
+}
+
+/* DONA LEGEND */
+.dona-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.dona-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  color: #64748b;
+  flex: 1;
+  min-width: 80px;
+}
+
+.legend-value {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* RENDIMIENTO */
+.rendimiento-body {
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.rend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.rend-name {
+  font-size: 12px;
+  color: #374151;
+  min-width: 100px;
+  text-align: right;
+}
+
+.rend-bar-container {
+  flex: 1;
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rend-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+.rend-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+  min-width: 40px;
+}
+
+/* RECENT TABLE */
+.recent-section {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+}
+
+.recent-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recent-table thead {
+  background: #f8fafc;
+}
+
+.recent-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.recent-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-top: 1px solid #f1f5f9;
+  color: #374151;
+}
+
+.recent-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+/* PIPELINE */
+.pipeline-section {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.pipe-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  padding: 12px 16px;
+  background: #f8fafc;
   border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.04);
-  width: 250px;
+  border: 1px solid #e2e8f0;
+  transition: 0.2s;
+}
+
+.pipe-step:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.pipe-icon {
+  font-size: 24px;
+}
+
+.pipe-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pipe-count {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.pipe-arrow {
+  font-size: 20px;
+  color: #cbd5e1;
+  font-weight: 300;
+}
+
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #64748b;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-mini {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 20px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .kpis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline {
+    flex-wrap: wrap;
+  }
+
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }

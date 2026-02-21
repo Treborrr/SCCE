@@ -1,0 +1,190 @@
+<div class="page">
+
+    <h2>Lotes Derivados</h2>
+    <p class="subtitle">Fusiona lotes de almacén para crear nuevos lotes más grandes</p>
+
+    <!-- TOAST -->
+    <div *ngIf="mostrarMensaje" class="toast"
+        [ngClass]="{ 'toast-success': tipoMensaje === 'success', 'toast-error': tipoMensaje === 'error' }">
+        {{ mensaje }}
+    </div>
+
+    <div class="acciones-top">
+        <button class="btn-primary" (click)="abrirForm()">+ Crear Lote Derivado</button>
+    </div>
+
+    <!-- LOADING -->
+    <div *ngIf="cargando" class="loading">Cargando derivados...</div>
+
+    <!-- EMPTY -->
+    <div *ngIf="!cargando && derivados.length === 0 && !mostrarForm" class="empty">
+        No hay lotes derivados aún. Crea uno fusionando lotes del almacén.
+    </div>
+
+    <!-- LISTA DE DERIVADOS -->
+    <div *ngIf="!cargando && derivados.length > 0" class="derivados-grid">
+        <div *ngFor="let d of derivados" class="derivado-card">
+
+            <div class="card-header">
+                <h3>{{ d.codigo }}</h3>
+                <span class="stock-badge">{{ d.stock_actual }} kg</span>
+            </div>
+
+            <div class="card-info">
+                <div class="info-row">
+                    <span class="info-label">Fecha creación</span>
+                    <span>{{ d.fecha_creacion | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Muestras</span>
+                    <span class="badge-count">{{ d.total_muestras }}</span>
+                </div>
+            </div>
+
+            <!-- Orígenes -->
+            <div class="origenes">
+                <div class="origenes-title">Lotes fusionados:</div>
+                <div *ngFor="let o of d.origenes" class="origen-chip">
+                    <span class="origen-tipo" [class.es-lote]="o.origen_tipo === 'LOTE'"
+                        [class.es-derivado]="o.origen_tipo === 'DERIVADO'">
+                        {{ o.origen_tipo }}
+                    </span>
+                    <strong>{{ o.codigo_origen }}</strong>
+                    <span class="origen-kg">{{ o.cantidad_kg }} kg</span>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn-muestra" (click)="abrirMuestra(d)" [disabled]="d.stock_actual <= 0">
+                    + Crear Muestra
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- MODAL: CREAR DERIVADO -->
+<!-- ========================= -->
+
+<div class="overlay" *ngIf="mostrarForm">
+    <div class="modal">
+
+        <button class="cerrar" (click)="mostrarForm = false">✕</button>
+
+        <h3>Crear Lote Derivado</h3>
+        <p class="modal-desc">Selecciona los lotes que deseas fusionar y define las cantidades.</p>
+
+        <div class="form-row-2">
+            <div class="form-group">
+                <label>Código del Nuevo Lote</label>
+                <input type="text" placeholder="Ej: DER-001" [(ngModel)]="formDerivado.codigo">
+            </div>
+            <div class="form-group">
+                <label>Fecha de Creación</label>
+                <input type="date" [(ngModel)]="formDerivado.fecha_creacion">
+            </div>
+        </div>
+
+        <!-- LOTES DISPONIBLES -->
+        <div class="section-label">Lotes Disponibles para Fusionar</div>
+        <div class="disponibles-grid">
+            <div *ngFor="let l of lotesDisponibles" class="disponible-card" (click)="agregarOrigen(l)">
+                <div class="disp-tipo" [class.es-lote]="l.tipo === 'LOTE'" [class.es-derivado]="l.tipo === 'DERIVADO'">
+                    {{ l.tipo }}
+                </div>
+                <div class="disp-info">
+                    <strong>{{ l.codigo }}</strong>
+                    <span *ngIf="l.proveedor_nombre">{{ l.proveedor_nombre }}</span>
+                </div>
+                <div class="disp-stock">{{ l.stock_actual }} kg</div>
+                <div class="disp-add">+</div>
+            </div>
+        </div>
+
+        <!-- LOTES SELECCIONADOS -->
+        <div *ngIf="formDerivado.origenes.length > 0">
+            <div class="section-label">Lotes Seleccionados para Fusión</div>
+
+            <div class="seleccionados-list">
+                <div *ngFor="let o of formDerivado.origenes; let i = index" class="seleccionado-row">
+                    <div class="sel-info">
+                        <span class="origen-tipo" [class.es-lote]="o.origen_tipo === 'LOTE'"
+                            [class.es-derivado]="o.origen_tipo === 'DERIVADO'">
+                            {{ o.origen_tipo }}
+                        </span>
+                        <strong>{{ o.codigo }}</strong>
+                        <span class="sel-disponible">Disponible: {{ o.stock_disponible }} kg</span>
+                    </div>
+                    <div class="sel-input">
+                        <label>Kg a tomar:</label>
+                        <input type="number" [min]="0.1" [max]="o.stock_disponible" step="0.01"
+                            [(ngModel)]="o.cantidad_kg">
+                    </div>
+                    <button class="btn-remove" (click)="eliminarOrigen(i)">✕</button>
+                </div>
+            </div>
+
+            <!-- RESUMEN -->
+            <div class="fusion-resumen">
+                <span>Total del nuevo lote:</span>
+                <strong>{{ totalFusion.toFixed(2) }} kg</strong>
+            </div>
+        </div>
+
+        <div class="acciones">
+            <button class="btn-secondary" (click)="mostrarForm = false">Cancelar</button>
+            <button class="btn-primary" (click)="crearDerivado()">Crear Lote Derivado</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ========================= -->
+<!-- MODAL: CREAR MUESTRA -->
+<!-- ========================= -->
+
+<div class="overlay" *ngIf="mostrarMuestraModal && derivadoParaMuestra">
+    <div class="modal-small">
+
+        <button class="cerrar" (click)="mostrarMuestraModal = false">✕</button>
+
+        <h3>Crear Muestra - {{ derivadoParaMuestra.codigo }}</h3>
+
+        <div class="stock-info">
+            Stock disponible: <strong>{{ derivadoParaMuestra.stock_actual }} kg</strong>
+        </div>
+
+        <div class="form-row-3">
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" [(ngModel)]="formMuestra.fecha">
+            </div>
+            <div class="form-group">
+                <label>Peso Muestra (g)</label>
+                <input type="number" placeholder="0" [(ngModel)]="formMuestra.peso_muestra_gramos">
+            </div>
+            <div class="form-group">
+                <label>Humedad %</label>
+                <input type="number" placeholder="Ej: 7.5" [(ngModel)]="formMuestra.humedad">
+            </div>
+        </div>
+
+        <div *ngIf="formMuestra.peso_muestra_gramos" class="preview-descuento">
+            Se descontarán <strong>{{ (formMuestra.peso_muestra_gramos! / 1000).toFixed(3) }} kg</strong>
+            del stock actual.
+            Nuevo stock: <strong>{{ (derivadoParaMuestra.stock_actual - formMuestra.peso_muestra_gramos! /
+                1000).toFixed(2) }} kg</strong>
+        </div>
+
+        <div class="acciones">
+            <button class="btn-secondary" (click)="mostrarMuestraModal = false">Cancelar</button>
+            <button class="btn-primary" (click)="crearMuestra()">Crear Muestra</button>
+        </div>
+
+    </div>
+</div>

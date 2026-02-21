@@ -10,11 +10,13 @@ exports.LotesDerivadosModule = void 0;
 const common_1 = require("@nestjs/common");
 const lotes_derivados_controller_1 = require("./lotes-derivados.controller");
 const lotes_derivados_service_1 = require("./lotes-derivados.service");
+const database_module_1 = require("../database/database.module");
 let LotesDerivadosModule = class LotesDerivadosModule {
 };
 exports.LotesDerivadosModule = LotesDerivadosModule;
 exports.LotesDerivadosModule = LotesDerivadosModule = __decorate([
     (0, common_1.Module)({
+        imports: [database_module_1.DatabaseModule],
         controllers: [lotes_derivados_controller_1.LotesDerivadosController],
         providers: [lotes_derivados_service_1.LotesDerivadosService]
     })

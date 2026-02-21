@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,106 +6,105 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-almacen',
   standalone: true,
-  imports: [
-    CommonModule,   // 👈 NECESARIO para *ngIf y date pipe
-    FormsModule     // 👈 NECESARIO para ngModel
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './almacen.html',
   styleUrls: ['./almacen.scss']
 })
 export class Almacen implements OnInit {
 
-  lotes: any[] = [];
-  mostrarModal = false;
+  // Lotes pendientes de ingresar a almacén
+  lotesListos: any[] = [];
+  // Lotes ya en almacén
+  lotesEnAlmacen: any[] = [];
+
+  // Modal Ingreso
+  mostrarModalIngreso = false;
   loteSeleccionado: any = null;
 
-  form = {
-  fecha: '',
-  hora: '',
-  sacos: 0,
-  kg_brutos: 0,
-  kg_neto: 0,
-  rendimiento: 0
+  formIngreso = {
+    fecha: '',
+    hora: '',
+    sacos: 0,
+    kg_brutos: 0
   };
 
+  // Modal Muestra
+  mostrarModalMuestra = false;
+  loteParaMuestra: any = null;
 
-  constructor(private http: HttpClient) {}
+  formMuestra = {
+    fecha: '',
+    peso_muestra_gramos: null as number | null,
+    humedad: null as number | null
+  };
 
-  ngOnInit() {
-    this.cargarLotes();
-  }
-
-  cargarLotes() {
-    this.http.get<any[]>('http://localhost:3000/almacen/lotes')
-      .subscribe(data => this.lotes = data);
-  }
-
-  abrirModal(lote: any) {
-    this.loteSeleccionado = lote;
-    this.mostrarModal = true;
-
-    const ahora = new Date();
-    this.form.fecha = ahora.toISOString().split('T')[0];
-    this.form.hora = ahora.toTimeString().slice(0,5);
-  }
-
-  cerrarModal() {
-    this.mostrarModal = false;
-  }
-  
-  mensaje: string = '';
+  // Mensajes
+  mensaje = '';
   tipoMensaje: 'success' | 'error' = 'success';
   mostrarMensaje = false;
 
-  mostrarMensajeTemporal() { 
-    setTimeout(() => {
-      this.mensaje = '';
-    }, 3000);
-  }
-
-  registrarIngreso() {
-    this.http.post(
-      `http://localhost:3000/almacen/${this.loteSeleccionado.id}/ingresar`,
-      this.form
-    ).subscribe({
-      next: () => {
-        this.mostrarModal = false;
-        this.cargarLotes();
-
-        this.mensaje = 'Ingreso registrado correctamente';
-        this.tipoMensaje = 'success';
-        this.mostrarMensajeTemporal();
-      },
-      error: (err) => {
-        this.mensaje = err.error?.message || 'No se pudo registrar';
-        this.tipoMensaje = 'error';
-        this.mostrarMensajeTemporal();
-      }
-    });
-  }
-
+  // Preview cálculos ingreso
   animatedKgNeto = 0;
   animatedRendimiento = 0;
-  perdidaKg = 0;
-  kgNetoPreview: number = 0;          
-  rendimientoPreview: number = 0; 
+  perdidaKg = 0; // merma: kg baba - kg neto
+
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) { }
+
+  ngOnInit() {
+    this.cargarTodo();
+  }
+
+  cargarTodo() {
+    this.http.get<any[]>('http://localhost:3000/almacen/lotes')
+      .subscribe(data => {
+        this.lotesListos = data.filter(l => l.estado === 'LISTO_PARA_ALMACEN');
+        this.cdr.detectChanges();
+      });
+
+    this.http.get<any[]>('http://localhost:3000/almacen/en-almacen')
+      .subscribe(data => {
+        this.lotesEnAlmacen = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  // =========================
+  // MODAL INGRESO ALMACÉN
+  // =========================
+
+  abrirModalIngreso(lote: any) {
+    this.loteSeleccionado = lote;
+    this.mostrarModalIngreso = true;
+
+    const ahora = new Date();
+    this.formIngreso.fecha = ahora.toISOString().split('T')[0];
+    this.formIngreso.hora = ahora.toTimeString().slice(0, 5);
+    this.formIngreso.sacos = 0;
+    this.formIngreso.kg_brutos = 0;
+    this.animatedKgNeto = 0;
+    this.animatedRendimiento = 0;
+    this.perdidaKg = 0;
+  }
+
+  cerrarModalIngreso() {
+    this.mostrarModalIngreso = false;
+  }
+
   calcularPreview() {
-    const sacos = Number(this.form.sacos);
-    const kgBrutos = Number(this.form.kg_brutos);
+    const sacos = Number(this.formIngreso.sacos);
+    const kgBrutos = Number(this.formIngreso.kg_brutos);
 
     if (!this.loteSeleccionado) return;
 
     if (sacos > 0 && kgBrutos > 0) {
-
       const kgNeto = kgBrutos - (sacos * 0.2);
-      const rendimiento =
-        (kgNeto / this.loteSeleccionado.kg_baba_compra) * 100;
-
-      this.perdidaKg = Number((kgBrutos - kgNeto).toFixed(2));
-
+      const rendimiento = (kgNeto / this.loteSeleccionado.kg_baba_compra) * 100;
+      this.perdidaKg = Number((this.loteSeleccionado.kg_baba_compra - kgNeto).toFixed(2));
       this.animarNumero('kg', kgNeto);
       this.animarNumero('rendimiento', rendimiento);
-
     } else {
       this.animatedKgNeto = 0;
       this.animatedRendimiento = 0;
@@ -132,15 +131,92 @@ export class Almacen implements OnInit {
 
       if (contador >= pasos) {
         clearInterval(intervalo);
-
         if (tipo === 'kg') {
           this.animatedKgNeto = Number(valorFinal.toFixed(2));
         } else {
           this.animatedRendimiento = Number(valorFinal.toFixed(2));
         }
       }
-
     }, duracion / pasos);
+  }
+
+  registrarIngreso() {
+    this.http.post(
+      `http://localhost:3000/almacen/${this.loteSeleccionado.id}/ingresar`,
+      this.formIngreso
+    ).subscribe({
+      next: () => {
+        this.mostrarModalIngreso = false;
+        this.cargarTodo();
+        this.mensaje = 'Ingreso registrado correctamente';
+        this.tipoMensaje = 'success';
+        this.mostrarMensajeTemporal();
+      },
+      error: (err) => {
+        this.mensaje = err.error?.message || 'No se pudo registrar';
+        this.tipoMensaje = 'error';
+        this.mostrarMensajeTemporal();
+      }
+    });
+  }
+
+  // =========================
+  // MODAL CREAR MUESTRA
+  // =========================
+
+  abrirModalMuestra(lote: any) {
+    this.loteParaMuestra = lote;
+    this.mostrarModalMuestra = true;
+
+    const ahora = new Date();
+    this.formMuestra = {
+      fecha: ahora.toISOString().split('T')[0],
+      peso_muestra_gramos: null,
+      humedad: null
+    };
+  }
+
+  cerrarModalMuestra() {
+    this.mostrarModalMuestra = false;
+  }
+
+  registrarMuestra() {
+    if (!this.formMuestra.fecha || !this.formMuestra.peso_muestra_gramos) {
+      this.mensaje = 'Debe ingresar fecha y peso de la muestra';
+      this.tipoMensaje = 'error';
+      this.mostrarMensajeTemporal();
+      return;
+    }
+
+    this.http.post(
+      `http://localhost:3000/muestras/${this.loteParaMuestra.id}/crear`,
+      this.formMuestra
+    ).subscribe({
+      next: (res: any) => {
+        this.mostrarModalMuestra = false;
+        this.cargarTodo();
+        this.mensaje = `Muestra creada. Stock actualizado: ${res.nuevo_stock?.toFixed(2)} kg`;
+        this.tipoMensaje = 'success';
+        this.mostrarMensajeTemporal();
+      },
+      error: (err) => {
+        this.mensaje = err.error?.message || 'Error al crear muestra';
+        this.tipoMensaje = 'error';
+        this.mostrarMensajeTemporal();
+      }
+    });
+  }
+
+  // =========================
+  // TOAST
+  // =========================
+
+  mostrarMensajeTemporal() {
+    this.mostrarMensaje = true;
+    setTimeout(() => {
+      this.mostrarMensaje = false;
+      this.cdr.detectChanges();
+    }, 4000);
   }
 
 }

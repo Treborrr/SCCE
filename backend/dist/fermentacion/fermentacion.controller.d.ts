@@ -8,4 +8,11 @@ export declare class FermentacionController {
         message: string;
         numeroRemocion: number | null;
     }>;
+    uploadFoto(file: any): {
+        foto_url: string;
+    };
+    actualizarFotoEvento(eventoId: string, body: {
+        foto_url: string;
+        descripcion?: string;
+    }): Promise<any>;
 }

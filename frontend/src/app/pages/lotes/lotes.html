@@ -1,7 +1,7 @@
 <div class="lotes-container">
 
   <div class="header">
-    <h2>Lotes</h2>
+    <h2>Lotes — Ingreso</h2>
     <button class="btn-primary" (click)="abrirModal()">+ Nuevo Lote</button>
   </div>
 
@@ -20,7 +20,6 @@
           <th>Kg Baba</th>
           <th>Kg Segunda</th>
           <th>Estado</th>
-          <th>Acción</th>
         </tr>
       </thead>
       <tbody>
@@ -35,14 +34,6 @@
               {{ lote.estado }}
             </span>
           </td>
-          <td>
-            <button 
-              class="btn-secondary"
-              *ngIf="lote.estado === 'INGRESADO'"
-              (click)="pasarAFermentacion(lote.id)">
-              Listo para Fermentación
-            </button>
-          </td>
         </tr>
       </tbody>
     </table>
@@ -51,7 +42,7 @@
 
   <ng-template #emptyState>
     <div class="empty">
-      No hay lotes registrados.
+      No hay lotes pendientes por enviar a fermentación.
     </div>
   </ng-template>
 
@@ -71,7 +62,7 @@
     <input type="date" [(ngModel)]="nuevoLote.fecha_compra">
 
     <label>Proveedor</label>
-    <input type="text" [(ngModel)]="nuevoLote.proveedor">
+    <input type="text" [(ngModel)]="nuevoLote.proveedor_nombre">
 
     <label>Kg Baba Compra</label>
     <input type="number" [(ngModel)]="nuevoLote.kg_baba_compra">
