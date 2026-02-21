@@ -48,7 +48,14 @@ async function bootstrap() {
         origin: true,
         credentials: true
     });
-    await app.listen(3000);
+    await app.init();
+    const expressApp = app.getHttpAdapter().getInstance();
+    const distPath = (0, path_1.join)(__dirname, '..', '..', 'frontend', 'dist', 'frontend', 'browser');
+    expressApp.use(express.static(distPath));
+    expressApp.use((_req, res) => {
+        res.sendFile((0, path_1.join)(distPath, 'index.html'));
+    });
+    await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

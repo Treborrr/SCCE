@@ -73,7 +73,7 @@ export class Fermentacion implements OnInit {
   // =========================
 
   cargarLotes() {
-    this.http.get<any[]>('http://localhost:3000/fermentacion/lotes')
+    this.http.get<any[]>('/fermentacion/lotes')
       .subscribe({
         next: (data) => {
           this.lotes = data;
@@ -95,7 +95,7 @@ export class Fermentacion implements OnInit {
     this.mostrarPanel = true;
 
     this.http.get<any[]>(
-      `http://localhost:3000/fermentacion/${lote.id}/eventos`
+      `/fermentacion/${lote.id}/eventos`
     ).subscribe(data => {
       this.eventos = data;
       this.cdr.detectChanges();
@@ -207,7 +207,7 @@ export class Fermentacion implements OnInit {
       this.subiendoFoto = true;
 
       this.http.post<{ foto_url: string }>(
-        'http://localhost:3000/fermentacion/upload',
+        '/fermentacion/upload',
         formData
       ).subscribe({
         next: (res) => {
@@ -245,7 +245,7 @@ export class Fermentacion implements OnInit {
 
       // Enviar evento
       this.http.post(
-        `http://localhost:3000/fermentacion/${this.loteSeleccionado.id}/evento`,
+        `/fermentacion/${this.loteSeleccionado.id}/evento`,
         this.nuevoEvento
       ).subscribe({
 
@@ -253,7 +253,7 @@ export class Fermentacion implements OnInit {
 
           // Recargar eventos
           this.http.get<any[]>(
-            `http://localhost:3000/fermentacion/${this.loteSeleccionado.id}/eventos`
+            `/fermentacion/${this.loteSeleccionado.id}/eventos`
           ).subscribe(data => {
             this.eventos = data;
             this.cdr.detectChanges();
@@ -373,13 +373,13 @@ export class Fermentacion implements OnInit {
       formData.append('foto', this.fotoEventoFile);
 
       const uploadRes: any = await new Promise((resolve, reject) => {
-        this.http.post('http://localhost:3000/fermentacion/upload', formData)
+        this.http.post('/fermentacion/upload', formData)
           .subscribe({ next: resolve, error: reject });
       });
 
       // 2. Actualizar evento con la foto
       await new Promise((resolve, reject) => {
-        this.http.patch(`http://localhost:3000/fermentacion/evento/${evento.id}/foto`, {
+        this.http.patch(`/fermentacion/evento/${evento.id}/foto`, {
           foto_url: uploadRes.foto_url,
           descripcion: this.descripcionEvento || null
         }).subscribe({ next: resolve, error: reject });

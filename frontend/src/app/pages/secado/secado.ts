@@ -41,7 +41,7 @@ export class Secado implements OnInit {
   }
 
   cargarLotes() {
-    this.http.get<any[]>('http://localhost:3000/secado/lotes')
+    this.http.get<any[]>('/secado/lotes')
       .subscribe({
         next: (data) => {
           console.log('SECADO LOTES:', data);
@@ -61,7 +61,7 @@ export class Secado implements OnInit {
     this.mostrarPanel = true;
 
     this.http.get<any[]>(
-      `http://localhost:3000/secado/${lote.id}/eventos`
+      `/secado/${lote.id}/eventos`
     ).subscribe(data => {
       this.eventos = data;
       this.cdr.detectChanges();
@@ -75,7 +75,7 @@ export class Secado implements OnInit {
 
   guardarEvento() {
     this.http.post(
-      `http://localhost:3000/secado/${this.loteSeleccionado.id}/finalizar`,
+      `/secado/${this.loteSeleccionado.id}/finalizar`,
       this.nuevoEvento
     ).subscribe({
       next: () => {
@@ -122,7 +122,7 @@ export class Secado implements OnInit {
   confirmarFinalizacion() {
 
     this.http.post(
-      `http://localhost:3000/secado/${this.loteSeleccionado.id}/finalizar`,
+      `/secado/${this.loteSeleccionado.id}/finalizar`,
       {
         fecha_fin: new Date().toISOString().split('T')[0],
         hora_fin: new Date().toTimeString().slice(0,5)
@@ -181,7 +181,7 @@ export class Secado implements OnInit {
     }
 
     this.http.post(
-      `http://localhost:3000/secado/${this.loteSeleccionado.id}/finalizar`,
+      `/secado/${this.loteSeleccionado.id}/finalizar`,
       {
         tipo: 'FIN',
         fecha_fin: this.formFinal.fecha_fin,

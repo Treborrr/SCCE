@@ -58,13 +58,13 @@ export class Almacen implements OnInit {
   }
 
   cargarTodo() {
-    this.http.get<any[]>('http://localhost:3000/almacen/lotes')
+    this.http.get<any[]>('/almacen/lotes')
       .subscribe(data => {
         this.lotesListos = data.filter(l => l.estado === 'LISTO_PARA_ALMACEN');
         this.cdr.detectChanges();
       });
 
-    this.http.get<any[]>('http://localhost:3000/almacen/en-almacen')
+    this.http.get<any[]>('/almacen/en-almacen')
       .subscribe(data => {
         this.lotesEnAlmacen = data;
         this.cdr.detectChanges();
@@ -142,7 +142,7 @@ export class Almacen implements OnInit {
 
   registrarIngreso() {
     this.http.post(
-      `http://localhost:3000/almacen/${this.loteSeleccionado.id}/ingresar`,
+      `/almacen/${this.loteSeleccionado.id}/ingresar`,
       this.formIngreso
     ).subscribe({
       next: () => {
@@ -189,7 +189,7 @@ export class Almacen implements OnInit {
     }
 
     this.http.post(
-      `http://localhost:3000/muestras/${this.loteParaMuestra.id}/crear`,
+      `/muestras/${this.loteParaMuestra.id}/crear`,
       this.formMuestra
     ).subscribe({
       next: (res: any) => {

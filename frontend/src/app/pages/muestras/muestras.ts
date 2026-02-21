@@ -63,7 +63,7 @@ export class Muestras implements OnInit {
   }
 
   cargarMuestras() {
-    this.http.get<any[]>('http://localhost:3000/muestras/todas')
+    this.http.get<any[]>('/muestras/todas')
       .subscribe({
         next: (data) => {
           this.muestras = data;
@@ -94,7 +94,7 @@ export class Muestras implements OnInit {
 
   cargarAnalisis(muestraId: string) {
     this.http.get<any[]>(
-      `http://localhost:3000/muestras/${muestraId}/analisis`
+      `/muestras/${muestraId}/analisis`
     ).subscribe(data => {
       this.analisisList = data;
       this.cdr.detectChanges();
@@ -156,7 +156,7 @@ export class Muestras implements OnInit {
       const formData = new FormData();
       formData.append('foto', this.selectedFile);
       this.http.post<{ foto_url: string }>(
-        'http://localhost:3000/muestras/upload-foto',
+        '/muestras/upload-foto',
         formData
       ).subscribe({
         next: (res) => resolve(res.foto_url),
@@ -181,7 +181,7 @@ export class Muestras implements OnInit {
       }
 
       this.http.post(
-        `http://localhost:3000/muestras/${this.muestraSeleccionada.id}/analisis`,
+        `/muestras/${this.muestraSeleccionada.id}/analisis`,
         this.formAnalisis
       ).subscribe({
         next: () => {
@@ -272,7 +272,7 @@ export class Muestras implements OnInit {
 
   cargarCatas(muestraId: string) {
     this.http.get<any[]>(
-      `http://localhost:3000/cata/muestra/${muestraId}`
+      `/cata/muestra/${muestraId}`
     ).subscribe(data => {
       this.catasList = data;
       this.cdr.detectChanges();
@@ -299,7 +299,7 @@ export class Muestras implements OnInit {
     }
 
     this.http.post<any>(
-      `http://localhost:3000/cata/${this.muestraSeleccionada.id}/crear`,
+      `/cata/${this.muestraSeleccionada.id}/crear`,
       this.formCata
     ).subscribe({
       next: async (res) => {
@@ -342,7 +342,7 @@ export class Muestras implements OnInit {
   verResultados(cata: any) {
     this.cataSeleccionada = cata;
     this.http.get<any[]>(
-      `http://localhost:3000/cata/${cata.id}/resultados`
+      `/cata/${cata.id}/resultados`
     ).subscribe(data => {
       this.cataResultados = data;
       this.mostrarResultados = true;

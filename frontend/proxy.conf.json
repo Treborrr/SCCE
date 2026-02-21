@@ -1,0 +1,12 @@
+{
+  "/lotes": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/fermentacion": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/secado": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/almacen": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/muestras": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/cata": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/lotes-derivados": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/dashboard": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/auth": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/uploads": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true }
+}

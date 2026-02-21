@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.0",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",

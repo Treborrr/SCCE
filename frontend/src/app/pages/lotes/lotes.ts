@@ -40,7 +40,7 @@ export class Lotes implements OnInit {
   }
 
   cargarLotes() {
-    this.http.get<any[]>('http://localhost:3000/lotes')
+    this.http.get<any[]>('/lotes')
       .subscribe(data => {
         console.log('LOTE DATA:', data);
         // Solo mostrar lotes recién ingresados (listos para fermentación)
@@ -58,7 +58,7 @@ export class Lotes implements OnInit {
   }
 
   guardar() {
-    this.http.post('http://localhost:3000/lotes', this.nuevoLote)
+    this.http.post('/lotes', this.nuevoLote)
       .subscribe({
         next: () => {
           this.mensajeExito = 'Lote registrado correctamente';

@@ -27,7 +27,7 @@ export class Dashboard implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit() {
-    this.http.get<any>('http://localhost:3000/dashboard/stats').subscribe({
+    this.http.get<any>('/dashboard/stats').subscribe({
       next: (data) => {
         this.stats = data;
         this.cargando = false;

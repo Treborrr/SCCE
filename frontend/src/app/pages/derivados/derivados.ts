@@ -48,7 +48,7 @@ export class Derivados implements OnInit {
     }
 
     cargarDerivados() {
-        this.http.get<any[]>('http://localhost:3000/lotes-derivados')
+        this.http.get<any[]>('/lotes-derivados')
             .subscribe({
                 next: (data) => {
                     this.derivados = data;
@@ -60,7 +60,7 @@ export class Derivados implements OnInit {
     }
 
     cargarDisponibles() {
-        this.http.get<any[]>('http://localhost:3000/lotes-derivados/disponibles')
+        this.http.get<any[]>('/lotes-derivados/disponibles')
             .subscribe(data => {
                 this.lotesDisponibles = data;
                 this.cdr.detectChanges();
@@ -140,7 +140,7 @@ export class Derivados implements OnInit {
             }))
         };
 
-        this.http.post('http://localhost:3000/lotes-derivados/crear', payload)
+        this.http.post('/lotes-derivados/crear', payload)
             .subscribe({
                 next: () => {
                     this.mostrarForm = false;
@@ -175,7 +175,7 @@ export class Derivados implements OnInit {
         }
 
         this.http.post(
-            `http://localhost:3000/lotes-derivados/${this.derivadoParaMuestra.id}/muestra`,
+            `/lotes-derivados/${this.derivadoParaMuestra.id}/muestra`,
             this.formMuestra
         ).subscribe({
             next: () => {

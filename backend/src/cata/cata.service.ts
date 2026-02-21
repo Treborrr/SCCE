@@ -82,7 +82,7 @@ export class CataService {
         links.push({
           catador: i + 1,
           token,
-          url: `http://localhost:4200/cata/${token}`,
+          url: `${process.env.FRONTEND_URL || 'http://localhost:4200'}/cata/${token}`,
         });
       }
 

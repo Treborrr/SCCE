@@ -20,6 +20,21 @@ async function bootstrap() {
     origin: true,
     credentials: true
   });
-  await app.listen(3000);
+
+  // Inicializar la app (registra todas las rutas NestJS)
+  await app.init();
+
+  // Servir el build de Angular como archivos estáticos
+  const expressApp = app.getHttpAdapter().getInstance();
+  const distPath = join(__dirname, '..', '..', 'frontend', 'dist', 'frontend', 'browser');
+
+  expressApp.use(express.static(distPath));
+
+  // SPA fallback: cualquier ruta no manejada por NestJS devuelve index.html
+  expressApp.use((_req: any, res: any) => {
+    res.sendFile(join(distPath, 'index.html'));
+  });
+
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

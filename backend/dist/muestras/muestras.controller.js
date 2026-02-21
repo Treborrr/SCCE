@@ -47,7 +47,7 @@ let MuestrasController = class MuestrasController {
             throw new common_1.BadRequestException('No se recibió ningún archivo');
         }
         return {
-            foto_url: `http://localhost:3000/uploads/${file.filename}`,
+            foto_url: `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`,
         };
     }
 };

@@ -91,7 +91,7 @@ export class CataForm implements OnInit {
 
     cargarInvitacion() {
         this.http.get<any>(
-            `http://localhost:3000/cata/invitacion/${this.token}`
+            `/cata/invitacion/${this.token}`
         ).subscribe({
             next: (data) => {
                 this.invitacion = data;
@@ -252,7 +252,7 @@ export class CataForm implements OnInit {
         }
 
         this.http.post(
-            `http://localhost:3000/cata/responder/${this.token}`,
+            `/cata/responder/${this.token}`,
             this.form
         ).subscribe({
             next: () => {
