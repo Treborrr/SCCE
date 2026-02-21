@@ -94,6 +94,28 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+.select-tueste {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    font-size: 14px;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.select-tueste:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.select-tueste option {
+    background: #1e293b;
+    color: white;
+}
+
 /* LEYENDA */
 .leyenda {
     background: rgba(255, 255, 255, 0.04);

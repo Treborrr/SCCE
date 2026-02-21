@@ -41,7 +41,12 @@
                 </div>
                 <div class="form-group">
                     <label>Tipo de Tueste</label>
-                    <input type="text" placeholder="Ej: Medio, Oscuro" [(ngModel)]="form.tipo_tueste">
+                    <select [(ngModel)]="form.tipo_tueste" class="select-tueste">
+                        <option value="" disabled>Seleccionar...</option>
+                        <option value="Ligero">Ligero</option>
+                        <option value="Medio">Medio</option>
+                        <option value="Oscuro">Oscuro</option>
+                    </select>
                 </div>
             </div>
         </div>

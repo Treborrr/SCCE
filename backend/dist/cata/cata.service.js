@@ -44,17 +44,23 @@ let CataService = class CataService {
           tipo,
           fecha,
           tipo_tueste,
+          temperatura,
+          tiempo,
+          tostadora,
           total_catadores,
           estado,
           created_by
         )
-        VALUES ($1,$2,$3,$4,$5,'ABIERTA',$6)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'ABIERTA',$9)
         RETURNING id
         `, [
                 muestraId,
                 data.tipo || 'NORMAL',
                 data.fecha,
-                data.tipo_tueste,
+                data.tipo_tueste || null,
+                data.temperatura || null,
+                data.tiempo || null,
+                data.tostadora || null,
                 data.total_catadores,
                 userId,
             ]);

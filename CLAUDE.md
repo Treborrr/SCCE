@@ -13,13 +13,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Si el usuario dice **no**: trabajar únicamente con el código fuente, sin acceder a credenciales ni a la DB.
 - **Nunca asumir acceso automático.** Preguntar siempre, sin excepciones.
 
+---
+
 ## Project Overview
 
 **SCCE** is a cacao production traceability system (Sistema de Trazabilidad de Producción de Cacao). It tracks production batches through the full lifecycle: intake → fermentation → drying → warehouse → sample extraction → physical/sensory analysis.
 
-- **Backend**: NestJS 11 (TypeScript) on port 3000
-- **Frontend**: Angular 21 (standalone components) on port 4200
+- **Backend**: NestJS 11 (TypeScript) — `backend/` — port 3000
+- **Frontend**: Angular 21 (standalone components) — `frontend/` — port 4200
 - **Database**: PostgreSQL on Railway (raw `pg` pool, no ORM)
+- **Deployment**: Railway (see `railway` branch/commit)
 
 ---
 
@@ -29,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run start:dev   # Dev server with watch mode
 npm run build       # Compile TypeScript to dist/
-npm run start:prod  # Run compiled output
+npm run start:prod  # Run compiled output (node dist/main)
 npm run lint        # ESLint with auto-fix
 npm run test        # Jest unit tests
 npm run test:e2e    # End-to-end tests
@@ -48,35 +51,116 @@ npm test            # Karma tests
 ## Architecture
 
 ### Lot State Machine
-The core domain is the **lot** (`lotes` table). Every lot moves through a strict state machine enforced at the service layer:
+
+The core domain is the **lot** (`lotes` table). Every lot moves through this state machine:
 
 ```
-INGRESADO → LISTO_PARA_FERMENTACION → FERMENTACION → LISTO_PARA_SECADO → SECADO → LISTO_PARA_ALMACEN → ALMACEN
+INGRESADO
+  ↓ (PATCH /lotes/:id/listo-fermentacion — manual)
+LISTO_PARA_FERMENTACION
+  ↓ (POST /fermentacion/:id/evento tipo=INICIO)
+FERMENTACION
+  ↓ (POST /fermentacion/:id/evento tipo=FINAL)
+SECADO                          ← secados record auto-created here
+  ↓ (POST /secado/:id/finalizar)
+LISTO_PARA_ALMACEN
+  ↓ (POST /almacen/:id/ingresar)
+ALMACEN
+  ↓ (stock_actual reaches 0 via muestra extraction or derivado)
+CONSUMIDO
 ```
 
-State transitions are triggered by business events (e.g., registering a `FINAL` fermentation event automatically creates a `secados` record and transitions the lot).
+> ⚠️ **IMPORTANTE**: `LISTO_PARA_SECADO` aparece en la documentación original pero **NO es un estado real** en el código. El evento `FINAL` de fermentación transiciona directamente a `SECADO`. `CONSUMIDO` sí existe en el código pero no está en el enum documentado.
 
-### Backend Modules (`backend/src/`)
-Each module maps to a production stage:
-- **lotes** – Batch creation and lifecycle management
-- **fermentacion** – Event-sourced fermentation log (INICIO, REMOCION, CONTROL, FINAL)
-- **secado** – Drying record per lot (finalization triggers ALMACEN readiness)
-- **almacen** – Warehouse entry; auto-calculates `kg_neto = kg_brutos - (sacos * 0.2)` and `rendimiento = (kg_neto / kg_baba_compra) * 100`
-- **muestras** – Sample extraction with automatic stock deduction from warehouse
-- **analisis** – Physical/defect/cut analysis on samples
-- **cata** – Sensory tasting evaluation (0–10 scale)
-- **lotes-derivados** – Secondary lots created by splitting warehouse stock
-- **usuarios** – User management
-- **auth** – JWT authentication and role-based guards
-- **database** – Global `pg` Pool provider (injected as `'DATABASE_CONNECTION'`)
+---
 
-### Database Access Pattern
-**No ORM is used.** All queries are raw SQL via the `pg` Pool injected as a provider. For multi-step operations, use explicit transactions:
+## Backend Modules (`backend/src/`)
+
+Each module maps to a production stage. All use `@Inject('PG_POOL')` for DB access.
+
+### Module Map
+
+| Módulo | Controlador | Prefijo ruta | Roles permitidos |
+|---|---|---|---|
+| `lotes` | LotesController | `/lotes` | ADMIN (GET), any authenticated (POST) |
+| `fermentacion` | FermentacionController | `/fermentacion` | ADMIN, OPERADOR_FERMENTACION |
+| `secado` | SecadoController | `/secado` | ADMIN, OPERADOR_SECADO |
+| `almacen` | AlmacenController | `/almacen` | ADMIN, OPERADOR_ALMACEN |
+| `muestras` | MuestrasController | `/muestras` | ADMIN, OPERADOR_ALMACEN |
+| `analisis` | AnalisisController | `/analisis` | (ver controlador) |
+| `cata` | CataController | `/cata` | ADMIN, CALIDAD, OPERADOR_ALMACEN (+ rutas públicas) |
+| `lotes-derivados` | LotesDerivadosController | `/lotes-derivados` | ADMIN, OPERADOR_ALMACEN |
+| `dashboard` | DashboardController | `/dashboard` | any authenticated (JwtAuthGuard only) |
+| `usuarios` | UsuariosController | `/usuarios` | ADMIN |
+| `auth` | AuthController | `/auth` | público |
+
+### API Endpoints Completos
+
+#### `/lotes`
+- `GET /lotes` — listar todos (ADMIN)
+- `POST /lotes` — crear lote (body: `CreateLoteDto`)
+- `PATCH /lotes/:id/listo-fermentacion` — transición manual a LISTO_PARA_FERMENTACION
+
+#### `/fermentacion`
+- `GET /fermentacion/lotes` — lotes en estado LISTO_PARA_FERMENTACION o FERMENTACION
+- `GET /fermentacion/:loteId/eventos` — historial de eventos del lote
+- `POST /fermentacion/:loteId/evento` — crear evento (INICIO|REMOCION|CONTROL|FINAL)
+- `POST /fermentacion/upload` — subir foto (multipart/form-data, campo `foto`)
+- `PATCH /fermentacion/evento/:eventoId/foto` — agregar foto a evento existente
+
+#### `/secado`
+- `GET /secado/lotes` — lotes en estado SECADO
+- `GET /secado/:loteId/eventos` — eventos de secado (tabla `secado_eventos` — ⚠️ puede no existir en DB)
+- `POST /secado/:loteId/finalizar` — finalizar secado (body: `fecha_fin, hora_fin, porcentaje_secado`)
+
+#### `/almacen`
+- `GET /almacen/lotes` — lotes LISTO_PARA_ALMACEN y ALMACEN
+- `GET /almacen/en-almacen` — lotes en ALMACEN con stock > 0
+- `POST /almacen/:loteId/ingresar` — ingresar a almacén (body: `fecha, hora, sacos, kg_brutos`)
+
+#### `/muestras`
+- `GET /muestras/lotes` — lotes en ALMACEN (para crear muestras)
+- `GET /muestras/todas` — todas las muestras con info de lote
+- `POST /muestras/:loteId/crear` — crear muestra (descuenta stock)
+- `GET /muestras/:muestraId/analisis` — análisis de una muestra
+- `POST /muestras/:muestraId/analisis` — registrar análisis físico
+- `POST /muestras/upload-foto` — subir foto de análisis
+
+#### `/cata`
+- `GET /cata/muestra/:muestraId` — listar catas de una muestra (auth requerido)
+- `POST /cata/:muestraId/crear` — crear sesión de cata + generar invitaciones (auth)
+- `GET /cata/invitacion/:token` — info de invitación (PÚBLICO)
+- `POST /cata/responder/:token` — enviar respuesta de cata (PÚBLICO)
+- `GET /cata/:cataId/resultados` — resultados de una cata (auth)
+
+#### `/lotes-derivados`
+- `GET /lotes-derivados/disponibles` — lotes y derivados con stock > 0
+- `GET /lotes-derivados` — listar todos los derivados
+- `POST /lotes-derivados/crear` — crear derivado (fusionar stocks)
+- `POST /lotes-derivados/:derivadoId/muestra` — crear muestra de un derivado
+
+#### `/dashboard`
+- `GET /dashboard/stats` — KPIs, gráficos, actividad reciente
+
+#### `/auth`
+- `POST /auth/login` — login (body: `email, password`) → `{ access_token }`
+
+---
+
+## Database Access Pattern
+
+**No ORM.** Raw SQL via `pg` Pool inyectado como `'PG_POOL'`.
+
+```typescript
+constructor(@Inject('PG_POOL') private pool: Pool) {}
+```
+
+Para operaciones multi-paso, usar transacciones explícitas:
 ```typescript
 const client = await this.pool.connect();
 try {
   await client.query('BEGIN');
-  // ... queries ...
+  // ... queries usando client.query() ...
   await client.query('COMMIT');
 } catch (e) {
   await client.query('ROLLBACK');
@@ -85,90 +169,226 @@ try {
   client.release();
 }
 ```
-Use `FOR UPDATE` row-level locking when reading then writing the same row (e.g., decrementing stock).
 
-### Authentication
-- JWT Bearer tokens issued by `POST /auth/login`
+Usar `FOR UPDATE` cuando se lee y luego escribe el mismo row (ej: decrementar stock).
+
+---
+
+## Authentication
+
+- JWT Bearer tokens → `POST /auth/login` → `{ access_token }`
+- Token firmado con payload: `{ sub: user.id, email, rol }`
+- JwtStrategy.validate() retorna el objeto user completo desde DB
+- **`req.user.id`** es el campo correcto para obtener el userId del usuario autenticado
 - Role enum: `ADMIN`, `OPERADOR_FERMENTACION`, `OPERADOR_SECADO`, `OPERADOR_ALMACEN`, `CALIDAD`, `CATADOR`
-- Guards applied per controller with `@UseGuards(JwtAuthGuard)` and `@Roles(...)`
-
-### Frontend Routing (`frontend/src/app/app.routes.ts`)
-All feature routes are **lazy-loaded** under a `LayoutComponent` shell:
-- `/lotes`, `/fermentacion`, `/secado`, `/almacen`, `/muestras`, `/derivados`
-- Login at root `/` or `/login`
-
-Frontend communicates with the backend via Angular `HttpClient` to `http://localhost:3000`.
+- Guards: `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('ROL1', 'ROL2')`
 
 ---
 
-## Key Constraints
+## File Upload Pattern
 
-- **Fermentation is event-sourced**: each action (remocion, control, etc.) appends a new row — records are never updated. Only a `FINAL` event closes fermentation.
-- **Muestras deduct stock**: extracting a sample decrements `almacenes.stock_actual` (not `kg_neto_final`, which is immutable).
-- **Derived lots** come from warehouse stock; subdividing a lot creates new `lotes_derivados` rows.
-- **No migration tool**: schema changes must be applied manually to the Railway PostgreSQL database.
+Los archivos se suben via `multipart/form-data` con `multer`:
+- Destino: `backend/uploads/` (carpeta local)
+- Servidos estáticamente en: `http://localhost:3000/uploads/<filename>`
+- Endpoints de upload: `POST /fermentacion/upload`, `POST /muestras/upload-foto`
+- Límite: 10MB, solo imágenes (jpg, jpeg, png, gif, webp)
+- La URL resultante se almacena en el campo `foto_url` de la tabla correspondiente
 
 ---
 
-## ⚠️ Errores Comunes y Trampas (LEER SIEMPRE)
+## Frontend Structure
 
-### 1. Naming mismatch frontend ↔ backend
-**Causa #1 de bugs.** Los nombres de campos en el frontend (`nuevoLote`, formularios, ngModel) DEBEN coincidir exactamente con los del DTO del backend y las columnas de la DB.
+### Configuración (`frontend/src/app/app.config.ts`)
+- `provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }))`
+- `provideHttpClient(withInterceptors([authInterceptor]))` — interceptor global de auth
 
-**Antes de crear/modificar un formulario, verificar:**
-- DTO en `backend/src/<módulo>/dto/*.dto.ts` → nombres de propiedades
-- Columnas en la DB (ver sección de esquema abajo)
-- Objeto del formulario en el componente Angular
-
-**Ejemplo del bug real:** Frontend enviaba `{ proveedor: "..." }` pero el backend esperaba `{ proveedor_nombre: "..." }`.
-
-### 2. URLs hardcodeadas en el frontend
-Actualmente cada componente Angular tiene `http://localhost:3000` hardcodeado directamente en las llamadas HTTP. **No hay servicios centralizados por módulo.** Al modificar algún componente, mantener esta convención existente (o refactorizar todo junto si se decide cambiar).
-
-Archivos afectados:
-- `frontend/src/app/pages/lotes/lotes.ts`
-- `frontend/src/app/pages/fermentacion/fermentacion.ts`
-- `frontend/src/app/pages/secado/secado.ts`
-- `frontend/src/app/pages/almacen/almacen.ts`
-- `frontend/src/app/pages/muestras/muestras.ts`
-- `frontend/src/app/core/services/auth.ts`
-
-### 3. Schema SQL vs DB real
-El archivo `backend/src/database/database.txt` contiene el DDL original, pero la DB en Railway puede haber sido modificada manualmente (ej: se añadió `proveedor_nombre` a la tabla `lotes`). **Siempre verificar contra la DB real**, no contra el archivo `.txt`.
-
-### 4. Provider token de la DB
-La conexión a PostgreSQL se inyecta con el token `'PG_POOL'` (NO `'DATABASE_CONNECTION'` como se menciona arriba). Al crear nuevos módulos:
-```typescript
-constructor(@Inject('PG_POOL') private pool: Pool) {}
+### Routing (`frontend/src/app/app.routes.ts`)
+```
+/ o /login              → LoginComponent (público)
+/cata/:token            → CataForm (PÚBLICO, sin layout ni auth)
+  [LayoutComponent shell]
+    /dashboard          → Dashboard
+    /lotes              → Lotes
+    /fermentacion       → Fermentacion
+    /secado             → Secado
+    /almacen            → Almacen
+    /muestras           → Muestras
+    /derivados          → Derivados
 ```
 
-### 5. Frontend: patrón de componentes standalone
-Todos los componentes Angular usan `standalone: true` con imports locales (`CommonModule`, `FormsModule`). No hay `NgModule` compartido. Al crear un nuevo componente:
+### Páginas y sus endpoints HTTP
+
+| Componente | Archivo | Endpoints que consume |
+|---|---|---|
+| `Lotes` | `pages/lotes/lotes.ts` | GET /lotes, POST /lotes |
+| `Fermentacion` | `pages/fermentacion/fermentacion.ts` | GET /fermentacion/lotes, GET /fermentacion/:id/eventos, POST /fermentacion/:id/evento, POST /fermentacion/upload, PATCH /fermentacion/evento/:id/foto |
+| `Secado` | `pages/secado/secado.ts` | GET /secado/lotes, POST /secado/:id/finalizar |
+| `Almacen` | `pages/almacen/almacen.ts` | GET /almacen/lotes, GET /almacen/en-almacen, POST /almacen/:id/ingresar, POST /muestras/:id/crear |
+| `Muestras` | `pages/muestras/muestras.ts` | GET /muestras/todas, GET /muestras/:id/analisis, POST /muestras/:id/analisis, POST /muestras/upload-foto, GET /cata/muestra/:id, POST /cata/:id/crear, GET /cata/:id/resultados |
+| `Derivados` | `pages/derivados/derivados.ts` | GET /lotes-derivados/disponibles, GET /lotes-derivados, POST /lotes-derivados/crear, POST /lotes-derivados/:id/muestra |
+| `Dashboard` | `pages/dashboard/dashboard.ts` | GET /dashboard/stats |
+| `CataForm` | `pages/cata-form/cata-form.ts` | GET /cata/invitacion/:token, POST /cata/responder/:token |
+
+### Patrón de componentes standalone
 ```typescript
 @Component({
   selector: 'app-nombre',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './nombre.html',
-  styleUrl: './nombre.scss'
+  styleUrls: ['./nombre.scss']
 })
 ```
+No hay `NgModule` compartido. Todos los imports son locales al componente.
 
-### 6. Auth en el frontend
-- Token JWT guardado en `localStorage` bajo la key `'token'`
-- Interceptor automático en `core/interceptors/auth-interceptor.ts` agrega `Authorization: Bearer <token>` a todas las peticiones
-- Roles se validan solo en el backend con `@Roles('ADMIN')` + `RolesGuard`
+### Auth en el frontend
+- Token JWT guardado en `localStorage` con key `'token'`
+- Interceptor: `core/interceptors/auth-interceptor.ts` agrega `Authorization: Bearer <token>` a todas las peticiones automáticamente
+- `AuthService` en `core/services/auth.ts`: `login()` guarda el token, `logout()` lo elimina
+- **No hay route guards** — cualquier usuario puede navegar a `/lotes` sin estar logueado
+
+### URLs hardcodeadas
+`http://localhost:3000` está hardcodeado en **cada componente**. No hay servicio centralizado de HTTP. Archivos afectados: todos los pages + `core/services/auth.ts`.
+
+> **Nota**: Existen archivos de entorno en `frontend/src/environments/` (actualmente sin trackear en git):
+> - `environment.ts`: `apiUrl: 'http://localhost:3000'`, `frontendUrl: 'http://localhost:4200'`
+> - `environment.prod.ts`: `apiUrl: ''` (vacío, para configurar en build)
+>
+> Los componentes NO importan estos archivos — usan URLs hardcodeadas directamente. Si se decide centralizar, este sería el punto de partida.
+
+### Librería externa
+- `qrcode` (v1.5.4) — usada en `Muestras` para generar QR codes de links de invitación a cata
+
+---
+
+## Key Business Logic
+
+### Cálculos automáticos (Almacén)
+```
+kg_neto = kg_brutos - (sacos × 0.2)
+rendimiento = (kg_neto / kg_baba_compra) × 100
+stock_actual = kg_neto  ← se inicializa aquí, luego se decrementa con muestras
+```
+
+### Fermentación (event-sourced)
+- Solo `APPEND` de eventos, nunca `UPDATE` (excepto `foto_url` via `actualizarFotoEvento`)
+- Orden obligatorio: INICIO → N×(REMOCION|CONTROL) → FINAL
+- La numeración de remociones se calcula automáticamente
+- El evento FINAL crea automáticamente el registro en `secados`
+
+### Muestras (stock management)
+- `descuento_kg = peso_muestra_gramos / 1000`
+- Stock se descuenta de `lotes.stock_actual` (no de `kg_neto_final`, que es inmutable)
+- Si `stock_actual <= 0` → estado del lote pasa a `CONSUMIDO`
+- Igual para derivados: si stock llega a 0 el lote origen pasa a `CONSUMIDO`
+
+### Cata (sistema de invitaciones)
+- Se generan N tokens UUID (uno por catador)
+- Links públicos: `http://localhost:4200/cata/<token>`
+- El form de cata (`/cata/:token`) es público, sin auth
+- Cuando todos responden → cata pasa a estado `CERRADA`
+
+### Derivados (fusión de stocks)
+- Se pueden combinar lotes tipo `LOTE` o `DERIVADO` como orígenes
+- Se valida stock suficiente con `FOR UPDATE` locking
+- Se registran movimientos en `movimientos_inventario`
+
+---
+
+## Dependencies
+
+### Backend (key)
+| Package | Versión | Uso |
+|---|---|---|
+| `@nestjs/common` | ^11.0.1 | Framework principal |
+| `@nestjs/jwt` | ^11.0.2 | JWT tokens |
+| `@nestjs/passport` | ^11.0.5 | Estrategia JWT |
+| `passport-jwt` | ^4.0.1 | Estrategia JWT |
+| `pg` | ^8.18.0 | PostgreSQL driver |
+| `bcrypt` | ^6.0.0 | Hash de contraseñas |
+| `multer` | ^2.0.2 | Upload de archivos |
+| `uuid` | ^8.3.2 | Generación de UUIDs |
+| `class-validator` | ^0.14.3 | Validación de DTOs |
+| `class-transformer` | ^0.5.1 | Transformación de clases |
+
+### Frontend (key)
+| Package | Versión | Uso |
+|---|---|---|
+| `@angular/common` | ^21.1.0 | Framework |
+| `@angular/forms` | ^21.1.0 | FormsModule (ngModel) |
+| `@angular/router` | ^21.1.0 | Routing |
+| `qrcode` | ^1.5.4 | QR codes para invitaciones de cata |
+| `rxjs` | ~7.8.0 | Observables HTTP |
+
+---
+
+## ⚠️ Errores Comunes y Trampas (LEER SIEMPRE)
+
+### 1. Naming mismatch frontend ↔ backend
+**Causa #1 de bugs.** Los nombres de campos en el frontend DEBEN coincidir exactamente con los del backend y la DB.
+
+**Antes de crear/modificar un formulario, verificar:**
+1. DTO en `backend/src/<módulo>/dto/*.dto.ts`
+2. Las columnas de la DB (sección de esquema abajo)
+3. El objeto del formulario en el componente Angular (`nuevoLote`, `formIngreso`, etc.)
+
+### 2. `req.user.id` vs `req.user.userId` — BUG CONOCIDO
+En `lotes.controller.ts`, el `create` usa `req.user.userId` pero el campo real del usuario (devuelto por `JwtStrategy.validate`) es `id`. **`req.user.userId` es `undefined`**. Los demás controladores usan `req.user.id` correctamente.
+
+### 3. Provider token de la DB
+```typescript
+constructor(@Inject('PG_POOL') private pool: Pool) {}
+```
+El token es `'PG_POOL'` (NO `'DATABASE_CONNECTION'`).
+
+### 4. Tablas con nombre inconsistente en el código
+Algunas referencias en el código no coinciden con el esquema documentado:
+- `analisis_fisico` (singular) — tabla real en DB, usada en `analisis.service.ts`
+- `analisis_fisicos` (plural) — referenciada en `muestras.service.ts` y `dashboard.service.ts` — puede ser un bug
+- `analisis_fisico_grupos` — referenciada en `muestras.service.ts` — verificar si existe en DB
+- `secado_eventos` — referenciada en `secado.service.ts` pero no está en el esquema conocido
+- `catas.estado`, `catas.fecha`, `catas.tipo_tueste`, `catas.temperatura`, `catas.tiempo`, `catas.tostadora` — usados en `cata.service.ts` pero no listados en el esquema original de `catas`
+- `muestras.humedad` — usado en `muestras.service.ts` pero no en el esquema documentado
+
+**Siempre verificar contra la DB real antes de escribir queries.**
+
+### 5. Estado CONSUMIDO (no documentado originalmente)
+`lotes.estado = 'CONSUMIDO'` se asigna cuando `stock_actual <= 0`. Este estado existe en la DB pero no aparecía en la documentación del state machine. Tenerlo en cuenta en filtros.
+
+### 6. console.log de credenciales
+`backend/src/database/database.module.ts` línea 24 tiene:
+```typescript
+console.log(process.env.DATABASE_URL);
+```
+Esto imprime la URL de la base de datos en consola. Debe eliminarse.
+
+### 7. No hay ValidationPipe global
+Los decoradores de validación en DTOs (`@IsString()`, `@IsNotEmpty()`, etc.) no ejecutarán a menos que se configure el `ValidationPipe` global en `main.ts`. Actualmente no está configurado.
+
+### 8. URLs hardcodeadas apuntan a localhost
+En producción (Railway), las URLs `http://localhost:3000` y `http://localhost:4200` no funcionan. Ver sección de deuda técnica.
+
+### 9. Frontend: `lotes.ts` solo muestra LISTO_PARA_FERMENTACION
+```typescript
+this.lotes = data.filter(l => l.estado === 'LISTO_PARA_FERMENTACION');
+```
+La página de Lotes filtra en el cliente, no en el servidor. El backend retorna todos los lotes al ADMIN.
 
 ---
 
 ## 🔧 Deuda técnica conocida
 
 - [ ] `database.module.ts` línea 24: `console.log(process.env.DATABASE_URL)` imprime credenciales en consola → **eliminar**
-- [ ] No hay `ValidationPipe` global configurado → los decoradores de validación en DTOs podrían no ejecutarse
+- [ ] `lotes.controller.ts`: usa `req.user.userId` (debería ser `req.user.id`) → `created_by` de lotes es siempre `undefined`
+- [ ] No hay `ValidationPipe` global configurado → los decoradores de validación en DTOs no ejecutan
 - [ ] No hay servicios Angular dedicados por módulo (cada componente hace HTTP directo)
+- [ ] URLs `http://localhost:3000` y `http://localhost:4200` hardcodeadas en todo el frontend (incluido `cata.service.ts` al generar links de invitación)
 - [ ] El archivo `database.txt` no refleja el estado actual de la DB Railway
 - [ ] No hay manejo de errores unificado en el frontend (algunos usan `alert()`, otros ignoran)
-- [ ] No hay guards de rutas en el frontend (cualquiera puede navegar a `/lotes` sin estar logueado)
+- [ ] No hay guards de rutas en el frontend (cualquier usuario puede navegar sin estar logueado)
+- [ ] `secado.service.ts` referencia tabla `secado_eventos` que no está en el esquema conocido
+- [ ] `muestras.service.ts` y `dashboard.service.ts` referencian `analisis_fisicos` (plural), posible error
+- [ ] `muestras.service.ts` tiene su propio `crearAnalisis` que duplica funcionalidad del módulo `analisis`
 
 ---
 
@@ -183,11 +403,17 @@ JWT_EXPIRES_IN=1h
 
 Default admin credentials (from README): `admin@cacao.com` / `123456`
 
+**main.ts settings:**
+- Body size limit: 10MB (para fotos en base64)
+- Static files: `backend/uploads/` servido en `/uploads`
+- CORS: `origin: true, credentials: true`
+- Puerto: 3000
+
 ---
 
 ## 🗄️ Esquema de Base de Datos Railway (actualizado: 2026-02-20)
 
-> Consultado en vivo desde Railway. 16 tablas en total.
+> Consultado en vivo desde Railway. 16 tablas documentadas + tablas adicionales probables (`secado_eventos`, `analisis_fisicos`, `analisis_fisico_grupos`). Siempre verificar contra DB real.
 
 ### almacenes (2 filas)
 - id: uuid NOT NULL DEFAULT uuid_generate_v4()
@@ -230,7 +456,7 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 - cata_id: uuid
 - token: uuid NOT NULL DEFAULT uuid_generate_v4()
 - nombre_catador: varchar
-- estado: enum DEFAULT 'PENDIENTE'
+- estado: enum DEFAULT 'PENDIENTE'  ← PENDIENTE | RESPONDIDA
 - responded_at: timestamp
 - created_at: timestamp DEFAULT now()
 
@@ -238,6 +464,8 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 - id: uuid NOT NULL DEFAULT uuid_generate_v4()
 - invitacion_id: uuid
 - nombre_catador: varchar NOT NULL
+- fecha: date
+- tipo_tueste: varchar
 - tostado, defecto, cacao, amargor, astringencia, acidez: integer (escala 0–10)
 - fruta_fresca, fruta_marron, vegetal, floral, madera, especies, nueces, caramel_pan: integer
 - global: integer
@@ -246,8 +474,14 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 ### catas (0 filas)
 - id: uuid NOT NULL DEFAULT uuid_generate_v4()
 - muestra_id: uuid
-- tipo: enum NOT NULL
+- tipo: varchar (ej: 'NORMAL')
+- fecha: date
+- tipo_tueste: varchar
+- temperatura: numeric
+- tiempo: numeric
+- tostadora: varchar
 - total_catadores: integer NOT NULL
+- estado: enum  ← ABIERTA | CERRADA
 - created_by: uuid
 - created_at: timestamp DEFAULT now()
 
@@ -267,7 +501,7 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 - created_by: uuid
 - created_at: timestamp DEFAULT now()
 
-### lote_proveedores (1 fila) — tabla pivote
+### lote_proveedores (1 fila) — tabla pivote (posiblemente sin uso activo)
 - lote_id: uuid NOT NULL
 - proveedor_id: uuid NOT NULL
 
@@ -277,7 +511,7 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 - fecha_compra: date NOT NULL
 - kg_baba_compra: numeric NOT NULL
 - kg_segunda: numeric DEFAULT 0
-- estado: enum NOT NULL  ← INGRESADO | LISTO_PARA_FERMENTACION | FERMENTACION | LISTO_PARA_SECADO | SECADO | LISTO_PARA_ALMACEN | ALMACEN
+- estado: enum NOT NULL  ← INGRESADO | LISTO_PARA_FERMENTACION | FERMENTACION | SECADO | LISTO_PARA_ALMACEN | ALMACEN | CONSUMIDO
 - kg_neto_final: numeric
 - rendimiento: numeric
 - stock_actual: numeric DEFAULT 0
@@ -295,7 +529,7 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 
 ### movimientos_inventario (0 filas)
 - id: uuid NOT NULL DEFAULT uuid_generate_v4()
-- origen_tipo: enum NOT NULL
+- origen_tipo: enum NOT NULL  ← LOTE | DERIVADO
 - origen_id: uuid NOT NULL
 - destino_derivado_id: uuid
 - cantidad_kg: numeric NOT NULL
@@ -304,9 +538,10 @@ Default admin credentials (from README): `admin@cacao.com` / `123456`
 
 ### muestras (0 filas)
 - id: uuid NOT NULL DEFAULT uuid_generate_v4()
-- lote_id: uuid
+- lote_id: uuid  ← puede referenciar lotes o lotes_derivados
 - fecha: date NOT NULL
 - peso_muestra_gramos: numeric NOT NULL
+- humedad: numeric  ← posible campo adicional no en esquema original
 - stock_descontado_kg: numeric NOT NULL
 - created_by: uuid
 - created_at: timestamp DEFAULT now()
